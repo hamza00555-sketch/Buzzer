@@ -13,8 +13,8 @@
 
   /* نص */
   --ink: #16182a;
-  --ink-2: #4b4f66;
-  --muted: #898ea6;
+  --ink-2: #43475e;
+  --muted: #6b7088;
 
   /* لوحة ألوان قوية حيّة (flat) */
   --indigo: #4f46e5;
@@ -38,8 +38,12 @@
   --sh-md: 0 8px 20px rgba(22, 24, 42, 0.10), 0 2px 6px rgba(22, 24, 42, 0.06);
   --sh-lg: 0 24px 50px rgba(22, 24, 42, 0.16), 0 8px 18px rgba(22, 24, 42, 0.08);
 
-  --radius: 22px;
-  --radius-sm: 14px;
+  --radius: 18px;
+  --radius-sm: 12px;
+  --radius-xs: 9px;
+
+  /* مقياس مسافات متّسق (polish) */
+  --sp-1: 6px; --sp-2: 10px; --sp-3: 16px; --sp-4: 22px; --sp-5: 32px;
 }
 
 * { box-sizing: border-box; }
@@ -58,16 +62,16 @@ body {
 
 /* العنوان */
 .brand { text-align: center; margin: 16px 0 26px; }
-.brand h1 { margin: 0; font-size: 2.1rem; font-weight: 900; letter-spacing: -0.5px; color: var(--primary); }
-.brand .sub { color: var(--muted); margin-top: 6px; font-size: 0.96rem; font-weight: 500; }
+.brand h1 { margin: 0; font-size: 2.5rem; font-weight: 900; letter-spacing: -1px; line-height: 1.05; color: var(--primary); }
+.brand .sub { color: var(--muted); margin-top: 8px; font-size: 1rem; font-weight: 600; }
 .brand .logo {
   font-size: 2rem; width: 76px; height: 76px; line-height: 76px; margin: 0 auto 10px;
   border-radius: 24px; background: var(--surface); box-shadow: var(--sh-md); border: 1px solid var(--line);
 }
 
 /* كروت بيضاء */
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; box-shadow: var(--sh-md); margin-bottom: 16px; }
-.card h2 { margin: 0 0 14px; font-size: 1.15rem; font-weight: 800; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--sp-4); box-shadow: var(--sh-md); margin-bottom: var(--sp-3); }
+.card h2 { margin: 0 0 16px; font-size: 1.3rem; font-weight: 900; letter-spacing: -0.3px; }
 .card .hint, .hint { color: var(--muted); font-size: 0.88rem; margin: 6px 0 0; font-weight: 500; }
 
 label { display: block; font-size: 0.9rem; color: var(--ink-2); margin: 12px 0 6px; font-weight: 700; }
@@ -91,6 +95,10 @@ textarea { resize: vertical; min-height: 66px; }
 }
 .btn:hover { filter: brightness(0.95); }
 .btn:active { transform: translateY(1px) scale(0.997); }
+.btn:focus-visible, .mode-chip:focus-visible, .opt-btn:focus-visible, .chip-btn:focus-visible,
+.role:focus-visible, .mini:focus-visible, .buzz-btn:focus-visible {
+  outline: 3px solid rgba(79, 70, 229, 0.5); outline-offset: 3px;
+}
 .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(0.35); box-shadow: none; }
 .btn.secondary { color: var(--primary); background: #fff; border: 1.5px solid var(--line); box-shadow: var(--sh-sm); }
 .btn.secondary:hover { border-color: var(--primary); filter: none; }
@@ -154,7 +162,7 @@ ul.list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8p
 .buzz-stage { text-align: center; padding: 8px 0 4px; }
 .buzz-btn {
   width: min(72vw, 290px); height: min(72vw, 290px); border-radius: 50%; border: none; cursor: pointer; color: #fff;
-  font-size: 1.9rem; font-weight: 900; letter-spacing: 1px; background: var(--coral);
+  font-size: 2.1rem; font-weight: 900; letter-spacing: 1px; background: var(--coral);
   box-shadow: 0 14px 0 var(--coral-d), 0 26px 44px rgba(244, 63, 94, 0.42);
   transition: transform 0.05s ease, box-shadow 0.05s ease, filter 0.2s ease;
 }
@@ -169,7 +177,7 @@ ul.list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8p
 .rank-line { margin-top: 16px; font-size: 1.5rem; font-weight: 900; min-height: 1.6em; }
 .rank-line strong { color: var(--primary); }
 
-.question-box { font-size: 1.3rem; font-weight: 800; line-height: 1.5; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 18px; text-align: center; min-height: 1.5em; }
+.question-box { font-size: 1.5rem; font-weight: 900; line-height: 1.4; letter-spacing: -0.3px; background: var(--surface-2); border-radius: var(--radius-sm); padding: var(--sp-4); text-align: center; min-height: 1.4em; }
 
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
 .topbar .who { font-weight: 800; }
