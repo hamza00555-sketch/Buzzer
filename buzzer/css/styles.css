@@ -6,33 +6,37 @@
 
 :root {
   /* أسطح */
-  --bg: #eef0f6;
+  --bg: #eaecf6;
   --surface: #ffffff;
-  --surface-2: #f4f5f9;
-  --line: #e7e9f1;
+  --surface-2: #f3f4fb;
+  --line: #e4e6f2;
 
   /* نص */
-  --ink: #20222e;
-  --ink-2: #565a6e;
-  --muted: #9094a6;
+  --ink: #16182a;
+  --ink-2: #4b4f66;
+  --muted: #898ea6;
 
-  /* لوحة ألوان هادئة (flat) */
-  --indigo: #5b61c9;
-  --teal:   #13a89e;
-  --coral:  #ef6f6c;
-  --amber:  #e9a23b;
-  --violet: #8a6fc4;
-  --sky:    #4f9fd6;
-  --rose:   #df6a9c;
-  --green:  #4faf8b;
+  /* لوحة ألوان قوية حيّة (flat) */
+  --indigo: #4f46e5;
+  --teal:   #0d9488;
+  --coral:  #f43f5e;
+  --amber:  #f59e0b;
+  --violet: #7c3aed;
+  --sky:    #0ea5e9;
+  --rose:   #ec4899;
+  --green:  #10b981;
+
+  /* درجات أغمق للظلال الثلاثية */
+  --coral-d: #be123c;
+  --amber-d: #b45309;
 
   --primary: var(--indigo);
   --danger:  var(--rose);
 
-  /* ظلال ناعمة */
-  --sh-sm: 0 1px 2px rgba(32, 34, 46, 0.06), 0 1px 3px rgba(32, 34, 46, 0.05);
-  --sh-md: 0 6px 16px rgba(32, 34, 46, 0.07), 0 2px 6px rgba(32, 34, 46, 0.05);
-  --sh-lg: 0 18px 40px rgba(32, 34, 46, 0.11), 0 6px 14px rgba(32, 34, 46, 0.06);
+  /* ظلال أوضح للعمق */
+  --sh-sm: 0 1px 2px rgba(22, 24, 42, 0.07), 0 1px 3px rgba(22, 24, 42, 0.06);
+  --sh-md: 0 8px 20px rgba(22, 24, 42, 0.10), 0 2px 6px rgba(22, 24, 42, 0.06);
+  --sh-lg: 0 24px 50px rgba(22, 24, 42, 0.16), 0 8px 18px rgba(22, 24, 42, 0.08);
 
   --radius: 22px;
   --radius-sm: 14px;
@@ -151,16 +155,16 @@ ul.list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8p
 .buzz-btn {
   width: min(72vw, 290px); height: min(72vw, 290px); border-radius: 50%; border: none; cursor: pointer; color: #fff;
   font-size: 1.9rem; font-weight: 900; letter-spacing: 1px; background: var(--coral);
-  box-shadow: 0 14px 0 #c8514e, 0 26px 44px rgba(239, 111, 108, 0.4);
+  box-shadow: 0 14px 0 var(--coral-d), 0 26px 44px rgba(244, 63, 94, 0.42);
   transition: transform 0.05s ease, box-shadow 0.05s ease, filter 0.2s ease;
 }
 .buzz-btn[data-armed="true"] { animation: pulse 1.1s ease-in-out infinite; }
-.buzz-btn:not(:disabled):active { transform: translateY(12px); box-shadow: 0 2px 0 #c8514e, 0 8px 18px rgba(239,111,108,0.4); }
+.buzz-btn:not(:disabled):active { transform: translateY(12px); box-shadow: 0 2px 0 var(--coral-d), 0 8px 18px rgba(244,63,94,0.4); }
 .buzz-btn:disabled { cursor: not-allowed; background: #cfd2e0; box-shadow: 0 10px 0 #b9bccd; color: #fff; }
-.buzz-btn.buzzed { background: var(--amber); color: #5a3d00; box-shadow: 0 12px 0 #bd8120; }
+.buzz-btn.buzzed { background: var(--amber); color: #5a3d00; box-shadow: 0 12px 0 var(--amber-d); }
 @keyframes pulse {
-  0%, 100% { box-shadow: 0 14px 0 #c8514e, 0 26px 44px rgba(239,111,108,0.4), 0 0 0 0 rgba(239,111,108,0.5); }
-  50% { box-shadow: 0 14px 0 #c8514e, 0 26px 44px rgba(239,111,108,0.4), 0 0 0 24px rgba(239,111,108,0); }
+  0%, 100% { box-shadow: 0 14px 0 var(--coral-d), 0 26px 44px rgba(244,63,94,0.42), 0 0 0 0 rgba(244,63,94,0.5); }
+  50% { box-shadow: 0 14px 0 var(--coral-d), 0 26px 44px rgba(244,63,94,0.42), 0 0 0 24px rgba(244,63,94,0); }
 }
 .rank-line { margin-top: 16px; font-size: 1.5rem; font-weight: 900; min-height: 1.6em; }
 .rank-line strong { color: var(--primary); }
@@ -284,3 +288,20 @@ footer a { color: var(--primary); }
 .confetti-bit { position: absolute; top: -20px; width: 10px; height: 16px; border-radius: 2px; opacity: 0.9; animation: fall 2.4s linear forwards; }
 @keyframes fall { to { transform: translateY(110vh) rotate(620deg); opacity: 0.4; } }
 @media (prefers-reduced-motion: reduce) { .confetti-bit, .buzz-btn[data-armed="true"] { animation: none; } .confetti-bit { display: none; } }
+
+/* ============ Family Feud — تحكّم المضيف ============ */
+.feud-board.host .feud-slot { flex-direction: column; align-items: stretch; gap: 8px; }
+.feud-slot.pick { cursor: pointer; border-style: solid; border-color: var(--line); transition: border-color 0.12s, background 0.12s, transform 0.08s; flex-direction: row; align-items: center; }
+.feud-slot.pick:hover { border-color: var(--indigo); background: rgba(79,70,229,0.06); transform: translateY(-1px); }
+.feud-slot.pick b { color: var(--indigo); }
+.feud-slot.picking { border-color: var(--indigo); background: rgba(79,70,229,0.07); }
+.fp-q { font-weight: 900; }
+.fp-players { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip-btn {
+  border: 1.5px solid var(--line); background: #fff; color: var(--ink); font-family: inherit; font-weight: 800;
+  padding: 8px 14px; border-radius: 999px; cursor: pointer; font-size: 0.95rem; transition: transform 0.08s, border-color 0.12s, background 0.12s;
+}
+.chip-btn:hover { border-color: var(--indigo); background: rgba(79,70,229,0.08); }
+.chip-btn:active { transform: scale(0.95); }
+.chip-btn.neutral { color: var(--ink-2); }
+.chip-btn.cancel { color: var(--coral); border-color: rgba(244,63,94,0.4); }

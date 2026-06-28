@@ -1,7 +1,7 @@
 // منطق اللاعب: انضمام بالكود، إدخال حسب وضع اللعب، الصوت/الاهتزاز، الترتيب والنقاط.
 import { supabase } from './supabase.js';
 import {
-  $, escapeHtml, normalizeAr, remainingSeconds,
+  $, escapeHtml, remainingSeconds,
   playBuzz, playArm, playCorrect, playWrong, vibrate, unlockAudio, store,
 } from './common.js';
 import { MODES } from './modes.js';
@@ -9,7 +9,6 @@ import { MODES } from './modes.js';
 let room = null, me = null, channel = null, timer = null;
 let buzzedRound = -1;          // آخر جولة ضغطت فيها (buzz)
 let answeredRound = -1;        // آخر جولة جاوبت فيها (mcq/closest)
-let myFeudGuesses = new Set(); // تخميناتي في جولة feud الحالية (مطبّعة)
 
 const el = {
   join: $('#join'), game: $('#game'),
@@ -79,7 +78,7 @@ function onRoomUpdate(n) {
   const becameLive = n.phase === 'live' && (room.phase !== 'live' || newRound);
   const becameReveal = n.phase === 'reveal' && room.phase !== 'reveal';
   room = n;
-  if (newRound) { buzzedRound = -1; answeredRound = -1; myFeudGuesses = new Set(); }
+  if (newRound) { buzzedRound = -1; answeredRound = -1; }
   if (becameLive) { unlockAudio(); playArm(); vibrate(150); }
   render(becameLive);
   if (room.phase === 'live') startTimer(); else stopTimer();
@@ -122,20 +121,6 @@ async function pickMcq(i) {
   const { error } = await supabase.from('answers')
     .insert({ room_id: room.id, round: room.round, player_id: me.id, value: String(i) });
   if (error && error.code !== '23505') { answeredRound = -1; $('#playMsg').textContent = 'تعذّر، حاول تاني'; }
-}
-
-async function submitFeud() {
-  const inp = $('#feudInput'); if (!inp) return;
-  const text = inp.value.trim();
-  if (!text || room.phase !== 'live') return;
-  const norm = normalizeAr(text);
-  if (myFeudGuesses.has(norm)) { inp.value = ''; return; }
-  myFeudGuesses.add(norm);
-  inp.value = '';
-  unlockAudio(); vibrate(40);
-  const { error } = await supabase.from('answers')
-    .insert({ room_id: room.id, round: room.round, player_id: me.id, value: text });
-  if (error && error.code !== '23505') myFeudGuesses.delete(norm);
 }
 
 async function submitClosest() {
@@ -196,27 +181,21 @@ function renderMcq() {
 }
 
 function renderFeud() {
+  // وضع شفهي: اللاعب يجاوب بصوته، والمضيف يكشف الإجابات. لا إدخال هنا.
   const total = room.payload?.total || 0;
   const revealed = room.payload?.revealed || [];
-  const live = room.phase === 'live';
+  const revMap = new Map(revealed.map((r) => [r.idx ?? -1, r]));
   const slots = [];
   for (let i = 0; i < total; i++) {
-    const r = revealed[i];
+    const r = revMap.get(i);
     const mine = r && r.by === me.id;
     slots.push(r
-      ? `<li class="feud-slot done${mine ? ' mine' : ''}"><span>${escapeHtml(r.text)}</span><b>+${r.points}${mine ? ' (أنت)' : ''}</b></li>`
-      : `<li class="feud-slot"><span>؟</span></li>`);
+      ? `<li class="feud-slot done${mine ? ' mine' : ''}"><span>${escapeHtml(r.text)}</span><b>+${r.points}${mine ? ' (أنت 🎉)' : ''}</b></li>`
+      : `<li class="feud-slot"><span>؟ ؟ ؟</span></li>`);
   }
   el.playArea.innerHTML = `
     <ul class="feud-board">${slots.join('')}</ul>
-    ${live ? `<div class="row mt">
-      <input id="feudInput" type="text" placeholder="اكتب تخمينك…" autocomplete="off" />
-      <button id="feudSubmit" class="btn" style="width:auto">أرسل</button>
-    </div><p class="hint">جرّب أكتر من إجابة!</p>` : '<p class="hint">انتهت الجولة.</p>'}`;
-  if (live) {
-    $('#feudSubmit').addEventListener('click', submitFeud);
-    $('#feudInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitFeud(); });
-  }
+    <p class="hint">${room.phase === 'live' ? '🎙️ جاوب بصوتك! المضيف يكشف الإجابات على الشاشة.' : 'انتهت الجولة.'}</p>`;
 }
 
 function renderClosest() {

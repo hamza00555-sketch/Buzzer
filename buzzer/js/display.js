@@ -123,9 +123,10 @@ function renderMcq() {
 function renderFeud() {
   const total = room.payload?.total || 0;
   const revealed = room.payload?.revealed || [];
+  const revMap = new Map(revealed.map((r) => [r.idx ?? -1, r]));
   const slots = [];
   for (let i = 0; i < total; i++) {
-    const r = revealed[i];
+    const r = revMap.get(i);
     slots.push(r
       ? `<li class="d-feud done"><span class="n">${i + 1}</span><span class="t">${escapeHtml(r.text)}</span><span class="p">+${r.points}</span></li>`
       : `<li class="d-feud"><span class="n">${i + 1}</span><span class="t">؟ ؟ ؟</span></li>`);

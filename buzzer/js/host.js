@@ -10,6 +10,7 @@ let answers = [];            // إجابات الجولة الحالية (mcq/fe
 let channel = null;
 let timer = null;            // مؤقّت الكشف التلقائي
 let authorMode = 'buzz';     // الوضع المختار في نموذج التأليف
+let pendingFeud = null;      // فهرس إجابة feud بانتظار اختيار اللاعب الذي قالها
 const scored = new Set();    // الجولات اللي اتحسبت نقاطها (منع التكرار)
 
 const el = {
@@ -118,7 +119,6 @@ async function onBuzz(b) {
 async function onAnswer(a) {
   if (a.round !== room.round) return;
   if (!answers.find((x) => x.id === a.id)) answers.push(a);
-  if (room.mode === 'feud' && room.phase === 'live') await tryFeudMatch(a);
   renderLive();
 }
 
@@ -164,8 +164,9 @@ async function startRound() {
       points: Number(r.querySelector('.feud-points').value) || 10,
     })).filter((a) => a.text !== '');
     if (!rows.length) return alert('أضف إجابة واحدة على الأقل.');
-    payload = { duration: readDuration('feud'), total: rows.length, revealed: [] };
-    secret = { accepted: rows.map((a) => ({ ...a, norm: normalizeAr(a.text) })) };
+    // وضع شفهي يقوده المضيف: بدون مؤقّت. الإجابات تبقى سرّاً (محلياً) حتى يكشفها المضيف.
+    payload = { duration: 0, total: rows.length, revealed: [] };
+    secret = { accepted: rows };
   } else if (mode === 'closest') {
     question = $('#q_closest').value.trim();
     const target = Number($('#closest_target').value);
@@ -182,7 +183,7 @@ async function startRound() {
   if (error) return alert(error.message);
 
   room = data;
-  buzzes = []; answers = [];
+  buzzes = []; answers = []; pendingFeud = null;
   saveSecret(round, secret);
   selectMode(mode);
   updatePhase();
@@ -257,29 +258,31 @@ async function scoreClosest(payload) {
 }
 
 async function scoreFeudRemaining(payload) {
-  // كشف الإجابات اللي ما حدش جابها (بدون نقاط) عند انتهاء الوقت
+  // كشف الإجابات اللي ما حدش ذكرها (بدون نقاط) عند إنهاء الجولة
   const secret = loadSecret(room.round);
-  const revealedNorms = new Set((payload.revealed || []).map((r) => normalizeAr(r.text)));
-  const missed = (secret?.accepted || []).filter((a) => !revealedNorms.has(a.norm))
-    .map((a) => ({ text: a.text, points: a.points, by: null }));
+  const revealedIdx = new Set((payload.revealed || []).map((r) => r.idx));
+  const missed = (secret?.accepted || [])
+    .map((a, idx) => ({ idx, text: a.text, points: a.points, by: null }))
+    .filter((a) => !revealedIdx.has(a.idx));
   return { ...payload, revealed: [...(payload.revealed || []), ...missed] };
 }
 
-async function tryFeudMatch(answer) {
+// المضيف يضغط على الإجابة عند ذكرها شفهياً → تظهر على شاشات الجميع وتُحتسب نقاطها للاعب.
+async function revealFeud(idx, playerId) {
   const secret = loadSecret(room.round);
-  if (!secret?.accepted) return;
-  const norm = normalizeAr(answer.value);
+  const ans = secret?.accepted?.[idx];
+  if (!ans) { pendingFeud = null; renderLive(); return; }
   const revealed = room.payload?.revealed || [];
-  if (revealed.some((r) => normalizeAr(r.text) === norm)) return; // مكشوفة قبل كده
-  const hit = secret.accepted.find((a) => a.norm === norm);
-  if (!hit) return;
-  const newRevealed = [...revealed, { text: hit.text, points: hit.points, by: answer.player_id }];
+  if (revealed.some((r) => r.idx === idx)) { pendingFeud = null; renderLive(); return; }
+  const entry = { idx, text: ans.text, points: ans.points, by: playerId || null };
   const { data, error } = await supabase.from('rooms')
-    .update({ payload: { ...room.payload, revealed: newRevealed } }).eq('id', room.id).select().single();
-  if (error) return;
+    .update({ payload: { ...room.payload, revealed: [...revealed, entry] } })
+    .eq('id', room.id).select().single();
+  if (error) { alert(error.message); return; }
   room = data;
-  await supabase.from('answers').update({ is_correct: true, points: hit.points }).eq('id', answer.id);
-  await addScore(answer.player_id, hit.points);
+  if (playerId) await addScore(playerId, ans.points);
+  pendingFeud = null;
+  renderLive();
 }
 
 async function addScore(playerId, delta) {
@@ -294,7 +297,7 @@ async function nextRound() {
   // العودة لشاشة التأليف (الوضع الحالي محفوظ)
   const { data } = await supabase.from('rooms').update({ phase: 'lobby' }).eq('id', room.id).select().single();
   if (data) room = data;
-  buzzes = []; answers = [];
+  buzzes = []; answers = []; pendingFeud = null;
   updatePhase();
   renderLive();
 }
@@ -394,18 +397,38 @@ function renderMcqLive() {
 }
 
 function renderFeudLive() {
-  const total = room.payload?.total || 0;
+  const accepted = loadSecret(room.round)?.accepted || [];
   const revealed = room.payload?.revealed || [];
-  const slots = [];
-  for (let i = 0; i < total; i++) {
-    const r = revealed[i];
-    slots.push(r
-      ? `<li class="feud-slot done"><span>${escapeHtml(r.text)}</span><b>+${r.points}${r.by ? '' : ' (لم تُذكر)'}</b></li>`
-      : `<li class="feud-slot"><span>؟</span></li>`);
-  }
-  const guesses = answers.length;
-  el.liveBody.innerHTML = `<p class="hint">${revealed.filter((r) => r.by).length}/${total} انكشفت · ${guesses} تخمين</p>
-    <ul class="feud-board">${slots.join('')}</ul>`;
+  const revMap = new Map(revealed.map((r) => [r.idx, r]));
+  const playerList = [...players.values()];
+
+  const rows = accepted.map((a, i) => {
+    const r = revMap.get(i);
+    if (r) {
+      const who = r.by ? (players.get(r.by)?.name || 'لاعب') : 'لم تُذكر';
+      return `<li class="feud-slot done"><span>${escapeHtml(a.text)}</span><b>+${a.points} · ${escapeHtml(who)}</b></li>`;
+    }
+    if (room.phase === 'reveal') {
+      return `<li class="feud-slot"><span>${escapeHtml(a.text)}</span><b>+${a.points}</b></li>`;
+    }
+    if (pendingFeud === i) {
+      const chips = playerList.length
+        ? playerList.map((p) => `<button class="chip-btn" data-feud-assign="${i}" data-player="${p.id}">${escapeHtml(p.name)}</button>`).join('')
+        : '<span class="hint">لا يوجد لاعبون بعد</span>';
+      return `<li class="feud-slot picking">
+        <div class="fp-q">«${escapeHtml(a.text)}» — مين قالها؟</div>
+        <div class="fp-players">${chips}
+          <button class="chip-btn neutral" data-feud-assign="${i}" data-player="">🚫 بدون أحد</button>
+          <button class="chip-btn cancel" data-feud-cancel>إلغاء</button>
+        </div></li>`;
+    }
+    return `<li class="feud-slot pick" data-feud-pick="${i}"><span>${escapeHtml(a.text)}</span><b>+${a.points} · اضغط عند ذكرها ▸</b></li>`;
+  }).join('');
+
+  const hint = room.phase === 'reveal'
+    ? `انتهت الجولة — ${revealed.filter((r) => r.by).length}/${accepted.length} نُسبت للاعبين.`
+    : `🔒 الإجابات ظاهرة لك فقط. اضغط الإجابة عند ذكرها شفهياً. (${revealed.length}/${accepted.length})`;
+  el.liveBody.innerHTML = `<p class="hint">${hint}</p><ul class="feud-board host">${rows}</ul>`;
 }
 
 function renderClosestLive() {
@@ -478,6 +501,14 @@ function wire() {
   });
   // إضافة صف إجابة في Family Feud
   $('#feud_add')?.addEventListener('click', addFeudRow);
+  // كشف إجابات Family Feud وإسنادها للاعب
+  el.liveBody.addEventListener('click', (e) => {
+    const pick = e.target.closest('[data-feud-pick]');
+    if (pick) { pendingFeud = Number(pick.dataset.feudPick); renderLive(); return; }
+    const assign = e.target.closest('[data-feud-assign]');
+    if (assign) { revealFeud(Number(assign.dataset.feudAssign), assign.dataset.player || null); return; }
+    if (e.target.closest('[data-feud-cancel]')) { pendingFeud = null; renderLive(); return; }
+  });
 }
 
 function addFeudRow() {
