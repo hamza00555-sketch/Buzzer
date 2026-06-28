@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1a1030" />
+  <title>🎤 المضيف — الباصرة</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="brand">
+      <div class="logo">🎤</div>
+      <h1>شاشة المضيف</h1>
+      <p class="sub"><a href="./index.html" style="color:var(--muted)">← الرئيسية</a></p>
+    </header>
+
+    <!-- إعداد: إنشاء غرفة -->
+    <section id="setup" class="card">
+      <h2>ابدأ غرفة جديدة</h2>
+      <p class="hint">اضغط لإنشاء غرفة بكود فريد، وشاركه مع اللاعبين.</p>
+      <button id="createBtn" class="btn mt">🚀 أنشئ غرفة</button>
+
+      <div id="resumeBox" class="mt" hidden>
+        <p class="hint">عندك غرفة محفوظة على الجهاز ده.</p>
+        <div class="row">
+          <button id="resumeBtn" class="btn secondary">↩︎ استكمل الغرفة السابقة</button>
+          <button id="newRoomBtn" class="btn ghost">غرفة جديدة</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- لوحة التحكم -->
+    <section id="dashboard" hidden>
+      <div class="card code-box">
+        <h2>كود الغرفة</h2>
+        <div class="code" id="roomCode">----</div>
+        <button id="copyBtn" class="btn secondary">📋 انسخ الكود</button>
+        <div class="status-line mt">
+          <span class="chip" id="stateLabel" data-state="lobby">في اللوبي</span>
+          <span class="chip">الجولة <strong id="roundLabel">0</strong></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>السؤال</h2>
+        <textarea id="questionInput" placeholder="اكتب السؤال هنا (اختياري)…"></textarea>
+        <div class="row mt">
+          <button id="showQuestionBtn" class="btn secondary">اعرض السؤال للاعبين</button>
+        </div>
+        <button id="armBtn" class="btn mt">🔔 جهّز الباصرة</button>
+        <button id="lockBtn" class="btn ghost mt" disabled>🔒 اقفل الباصرة</button>
+      </div>
+
+      <div class="card">
+        <h2>ترتيب الضغط — الجولة الحالية</h2>
+        <p class="hint" id="buzzEmpty">لسه محدش ضغط في الجولة دي.</p>
+        <ul class="list" id="buzzList"></ul>
+      </div>
+
+      <div class="card">
+        <h2>لوحة النقاط <span class="muted">(<span id="playerCount">0</span> لاعب)</span></h2>
+        <ul class="list" id="playerList"></ul>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./js/host.js"></script>
+</body>
+</html>
