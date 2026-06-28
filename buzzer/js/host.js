@@ -126,7 +126,7 @@ async function onAnswer(a) {
 function renderModePicker() {
   el.modePicker.innerHTML = MODE_LIST.map((m) => `
     <button class="mode-chip" data-mode="${m.key}" title="${escapeHtml(m.desc)}">
-      <span class="me">${m.emoji}</span><span>${m.name}</span>
+      <span class="me">${m.icon}</span><span>${m.name}</span>
     </button>`).join('');
 }
 
@@ -353,7 +353,7 @@ function renderLive() {
     return;
   }
   el.live.hidden = false;
-  el.liveTitle.textContent = `${m.emoji} ${m.name} — ${escapeHtml(room.question || '')}`;
+  el.liveTitle.innerHTML = `<span class="d-mode">${m.icon} ${m.name}</span> — ${escapeHtml(room.question || '')}`;
 
   if (room.mode === 'buzz') return renderBuzzLive();
   if (room.mode === 'mcq') return renderMcqLive();

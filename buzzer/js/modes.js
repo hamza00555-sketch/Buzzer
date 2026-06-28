@@ -1,31 +1,32 @@
 // تعريفات أوضاع اللعب — مرجع مشترك للمضيف واللاعب وشاشة العرض.
+import { ICONS } from './icons.js';
 
 export const MODES = {
   buzz: {
     key: 'buzz',
     name: 'الباصرة',
-    emoji: '⚡',
+    icon: ICONS.bolt,
     desc: 'أول من يضغط يجاوب، والمضيف يعطي النقطة.',
     defaultDuration: 0,      // بدون مؤقّت افتراضياً
   },
   mcq: {
     key: 'mcq',
     name: 'اختيار من متعدد',
-    emoji: '🎯',
+    icon: ICONS.target,
     desc: 'سؤال + خيارات، الكل يجاوب خلال مؤقّت، نقاط للصح + بونص سرعة.',
     defaultDuration: 20,
   },
   feud: {
     key: 'feud',
     name: 'اعرف الإجابات',
-    emoji: '👨‍👩‍👧',
+    icon: ICONS.users,
     desc: 'إجابات مخفية متعددة، اللاعبون يخمّنون وكل إجابة صح تنكشف وتعطي نقاط.',
     defaultDuration: 60,
   },
   closest: {
     key: 'closest',
     name: 'أقرب رقم',
-    emoji: '🔢',
+    icon: ICONS.hash,
     desc: 'سؤال رقمي، الأقرب للرقم الصحيح يكسب.',
     defaultDuration: 30,
   },

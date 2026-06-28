@@ -140,7 +140,7 @@ async function submitClosest() {
 function render() {
   const m = MODES[room.mode] || MODES.buzz;
   const q = (room.question || '').trim();
-  el.question.textContent = room.phase === 'lobby' ? 'استنى المضيف يبدأ الجولة…' : (q || `${m.emoji} ${m.name}`);
+  el.question.textContent = room.phase === 'lobby' ? 'استنى المضيف يبدأ الجولة…' : (q || m.name);
   el.question.classList.toggle('muted', room.phase === 'lobby');
   el.stateLabel.dataset.state = room.phase;
   el.stateLabel.textContent = { lobby: 'في الانتظار', live: 'الجولة شغّالة', reveal: 'النتيجة' }[room.phase] || room.phase;

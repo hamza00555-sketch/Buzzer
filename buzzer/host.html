@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#f1eff9" />
-  <title>🎤 المضيف — الباصرة</title>
+  <meta name="theme-color" content="#16122b" />
+  <title>المضيف — الباصرة</title>
   <link rel="stylesheet" href="./css/styles.css" />
 </head>
 <body>
   <main class="wrap">
     <header class="brand">
-      <div class="logo">🎤</div>
+      <span class="logo"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10a7 7 0 0 1-14 0"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></span>
       <h1>شاشة المضيف</h1>
       <p class="sub"><a href="./index.html" style="color:var(--muted)">← الرئيسية</a></p>
     </header>
@@ -19,11 +19,11 @@
     <section id="setup" class="card">
       <h2>ابدأ غرفة جديدة</h2>
       <p class="hint">اضغط لإنشاء غرفة بكود فريد، وشاركه مع اللاعبين وشاشة العرض.</p>
-      <button id="createBtn" class="btn mt">🚀 أنشئ غرفة</button>
+      <button id="createBtn" class="btn mt">أنشئ غرفة</button>
       <div id="resumeBox" class="mt" hidden>
         <p class="hint">عندك غرفة محفوظة على الجهاز ده.</p>
         <div class="row">
-          <button id="resumeBtn" class="btn secondary">↩︎ استكمل السابقة</button>
+          <button id="resumeBtn" class="btn secondary">استكمل السابقة</button>
           <button id="newRoomBtn" class="btn ghost">غرفة جديدة</button>
         </div>
       </div>
@@ -35,8 +35,8 @@
         <h2>كود الغرفة</h2>
         <div class="code" id="roomCode">----</div>
         <div class="row">
-          <button id="copyBtn" class="btn secondary">📋 انسخ الكود</button>
-          <a id="displayLink" class="btn secondary" href="#" target="_blank" rel="noopener">📺 افتح شاشة العرض</a>
+          <button id="copyBtn" class="btn secondary">انسخ الكود</button>
+          <a id="displayLink" class="btn secondary" href="#" target="_blank" rel="noopener">افتح شاشة العرض</a>
         </div>
         <div class="status-line mt">
           <span class="chip" id="phaseLabel" data-phase="lobby">جاهز</span>
@@ -94,9 +94,9 @@
           </div>
         </div>
 
-        <button id="startBtn" class="btn mt">▶️ ابدأ الجولة</button>
-        <button id="revealBtn" class="btn mt" hidden>🏁 اعرض النتيجة</button>
-        <button id="nextBtn" class="btn secondary mt" hidden>↻ جولة جديدة</button>
+        <button id="startBtn" class="btn mt">ابدأ الجولة</button>
+        <button id="revealBtn" class="btn mt" hidden>اعرض النتيجة</button>
+        <button id="nextBtn" class="btn secondary mt" hidden>جولة جديدة</button>
       </div>
 
       <div id="live" class="card" hidden>

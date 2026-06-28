@@ -2,6 +2,7 @@
 import { supabase } from './supabase.js';
 import { $, escapeHtml, formatDelta, urlParam } from './common.js';
 import { MODES } from './modes.js';
+import { ICONS } from './icons.js';
 
 let room = null, channel = null, timer = null;
 const players = new Map();
@@ -84,7 +85,7 @@ function render() {
       <p class="d-code-hint">${escapeHtml(room.code)}</p>`;
     return;
   }
-  el.title.innerHTML = `<span class="d-mode">${m.emoji} ${m.name}</span><br>${escapeHtml(room.question || '')}`;
+  el.title.innerHTML = `<span class="d-mode">${m.icon} ${m.name}</span><br>${escapeHtml(room.question || '')}`;
   if (room.mode === 'buzz') return renderBuzz();
   if (room.mode === 'mcq') return renderMcq();
   if (room.mode === 'feud') return renderFeud();
@@ -157,7 +158,7 @@ function renderBoard() {
   el.playerCount.textContent = players.size;
   const list = [...players.values()].sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 8);
   const medals = ['🥇', '🥈', '🥉'];
-  el.board.innerHTML = '<h3>الصدارة</h3>' + (list.length
+  el.board.innerHTML = `<h3>${ICONS.trophy} الصدارة</h3>` + (list.length
     ? '<ul>' + list.map((p, i) => `<li><span>${medals[i] || (i + 1)}</span><span class="bn">${escapeHtml(p.name)}</span><b>${p.score || 0}</b></li>`).join('') + '</ul>'
     : '<p class="d-hint">لسه محدش دخل</p>');
 }
