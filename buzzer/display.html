@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1a1030" />
+  <title>📺 شاشة العرض — الباصرة</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body class="display-body">
+  <!-- إدخال الكود -->
+  <section id="join" class="wrap">
+    <header class="brand">
+      <div class="logo">📺</div>
+      <h1>شاشة العرض</h1>
+      <p class="sub">اعرضها على التلفزيون — يتابعها الجمهور</p>
+    </header>
+    <div class="card">
+      <label for="codeInput">كود الغرفة</label>
+      <input id="codeInput" type="text" inputmode="latin" placeholder="ABCD" maxlength="4" autocomplete="off" />
+      <button id="joinBtn" class="btn mt">📺 اعرض</button>
+      <p id="joinError" class="error" hidden></p>
+      <p class="hint mt">تلميح: المضيف يقدر يفتح هذي الشاشة مباشرة بزر "افتح شاشة العرض".</p>
+    </div>
+  </section>
+
+  <!-- المسرح -->
+  <section id="stage" class="display-stage" hidden>
+    <div id="confetti" class="confetti"></div>
+    <header class="d-top">
+      <div class="d-room">
+        <span class="d-room-label">كود الدخول</span>
+        <span class="d-room-code" id="bigCode">----</span>
+      </div>
+      <div class="d-status">
+        <span class="chip" id="phaseLabel" data-phase="lobby">بانتظار البدء</span>
+        <span class="chip d-timer" id="timerLabel"></span>
+        <span class="chip">👥 <strong id="playerCount">0</strong></span>
+      </div>
+    </header>
+
+    <div class="d-main">
+      <div class="d-center">
+        <h2 id="title"></h2>
+        <div id="body"></div>
+      </div>
+      <aside id="board" class="d-board"></aside>
+    </div>
+  </section>
+
+  <script type="module" src="./js/display.js"></script>
+</body>
+</html>

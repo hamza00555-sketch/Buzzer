@@ -18,7 +18,7 @@
       </header>
       <div class="card">
         <label for="nameInput">اسمك</label>
-        <input id="nameInput" type="text" inputmode="text" placeholder="اكتب اسمك" maxlength="24" autocomplete="off" />
+        <input id="nameInput" type="text" placeholder="اكتب اسمك" maxlength="24" autocomplete="off" />
         <label for="codeInput">كود الغرفة</label>
         <input id="codeInput" type="text" inputmode="latin" placeholder="ABCD" maxlength="4" autocomplete="off" />
         <button id="joinBtn" class="btn mt">دخول</button>
@@ -34,19 +34,18 @@
       </div>
 
       <div class="card">
-        <div class="question-box muted" id="question">مفيش سؤال معروض حالياً</div>
-        <div class="status-line mt"><span class="chip" id="stateLabel" data-state="lobby">استنى لحد ما الباصرة تجهز…</span></div>
+        <div class="question-box" id="question">استنى المضيف يبدأ الجولة…</div>
+        <div class="status-line mt">
+          <span class="chip" id="stateLabel" data-state="lobby">في الانتظار</span>
+          <span class="chip" id="timerLabel"></span>
+        </div>
       </div>
 
-      <div class="card buzz-stage">
-        <button id="buzzBtn" class="buzz-btn" data-armed="false" disabled>اضغط!</button>
-        <div class="rank-line" id="rank"></div>
-      </div>
+      <div class="card" id="playArea"></div>
 
       <button id="leaveBtn" class="btn ghost">خروج</button>
     </section>
   </main>
-
   <script type="module" src="./js/player.js"></script>
 </body>
 </html>

@@ -15,16 +15,15 @@
       <p class="sub"><a href="./index.html" style="color:var(--muted)">← الرئيسية</a></p>
     </header>
 
-    <!-- إعداد: إنشاء غرفة -->
+    <!-- إعداد -->
     <section id="setup" class="card">
       <h2>ابدأ غرفة جديدة</h2>
-      <p class="hint">اضغط لإنشاء غرفة بكود فريد، وشاركه مع اللاعبين.</p>
+      <p class="hint">اضغط لإنشاء غرفة بكود فريد، وشاركه مع اللاعبين وشاشة العرض.</p>
       <button id="createBtn" class="btn mt">🚀 أنشئ غرفة</button>
-
       <div id="resumeBox" class="mt" hidden>
         <p class="hint">عندك غرفة محفوظة على الجهاز ده.</p>
         <div class="row">
-          <button id="resumeBtn" class="btn secondary">↩︎ استكمل الغرفة السابقة</button>
+          <button id="resumeBtn" class="btn secondary">↩︎ استكمل السابقة</button>
           <button id="newRoomBtn" class="btn ghost">غرفة جديدة</button>
         </div>
       </div>
@@ -35,36 +34,85 @@
       <div class="card code-box">
         <h2>كود الغرفة</h2>
         <div class="code" id="roomCode">----</div>
-        <button id="copyBtn" class="btn secondary">📋 انسخ الكود</button>
+        <div class="row">
+          <button id="copyBtn" class="btn secondary">📋 انسخ الكود</button>
+          <a id="displayLink" class="btn secondary" href="#" target="_blank" rel="noopener">📺 افتح شاشة العرض</a>
+        </div>
         <div class="status-line mt">
-          <span class="chip" id="stateLabel" data-state="lobby">في اللوبي</span>
+          <span class="chip" id="phaseLabel" data-phase="lobby">جاهز</span>
           <span class="chip">الجولة <strong id="roundLabel">0</strong></span>
+          <span class="chip" id="timerLabel"></span>
         </div>
       </div>
 
       <div class="card">
-        <h2>السؤال</h2>
-        <textarea id="questionInput" placeholder="اكتب السؤال هنا (اختياري)…"></textarea>
-        <div class="row mt">
-          <button id="showQuestionBtn" class="btn secondary">اعرض السؤال للاعبين</button>
+        <h2>اختر وضع اللعب</h2>
+        <div id="modePicker" class="mode-picker"></div>
+
+        <div id="forms" class="mt">
+          <!-- الباصرة -->
+          <div class="mode-form" data-mode="buzz">
+            <label for="q_buzz">السؤال (اختياري)</label>
+            <textarea id="q_buzz" placeholder="اكتب السؤال…"></textarea>
+            <label class="check"><input type="checkbox" id="buzz_lockout" /> قفل فوري بعد أول ضغطة</label>
+          </div>
+          <!-- اختيار من متعدد -->
+          <div class="mode-form" data-mode="mcq" hidden>
+            <label for="q_mcq">السؤال</label>
+            <textarea id="q_mcq" placeholder="اكتب السؤال…"></textarea>
+            <p class="hint">اكتب الخيارات وحدّد الصحيح:</p>
+            <div class="mcq-rows">
+              <div class="mcq-line"><input type="radio" name="mcq_correct" value="0" /><input class="mcq-opt" type="text" placeholder="الخيار A" /></div>
+              <div class="mcq-line"><input type="radio" name="mcq_correct" value="1" /><input class="mcq-opt" type="text" placeholder="الخيار B" /></div>
+              <div class="mcq-line"><input type="radio" name="mcq_correct" value="2" /><input class="mcq-opt" type="text" placeholder="الخيار C" /></div>
+              <div class="mcq-line"><input type="radio" name="mcq_correct" value="3" /><input class="mcq-opt" type="text" placeholder="الخيار D" /></div>
+            </div>
+            <label for="dur_mcq">مدة المؤقّت (ثانية)</label>
+            <input id="dur_mcq" type="number" value="20" min="5" />
+          </div>
+          <!-- اعرف الإجابات -->
+          <div class="mode-form" data-mode="feud" hidden>
+            <label for="q_feud">السؤال</label>
+            <textarea id="q_feud" placeholder="مثال: اذكر شيئاً يُهدى في الأعراس"></textarea>
+            <p class="hint">الإجابات المقبولة ونقاطها:</p>
+            <div id="feud_rows">
+              <div class="feud-row"><input class="feud-text" type="text" placeholder="إجابة مقبولة" /><input class="feud-points" type="number" value="10" min="1" /></div>
+              <div class="feud-row"><input class="feud-text" type="text" placeholder="إجابة مقبولة" /><input class="feud-points" type="number" value="10" min="1" /></div>
+            </div>
+            <button id="feud_add" class="btn ghost mt">+ أضف إجابة</button>
+            <label for="dur_feud">مدة المؤقّت (ثانية)</label>
+            <input id="dur_feud" type="number" value="60" min="10" />
+          </div>
+          <!-- أقرب رقم -->
+          <div class="mode-form" data-mode="closest" hidden>
+            <label for="q_closest">السؤال</label>
+            <textarea id="q_closest" placeholder="مثال: كم عدد المدعوين الليلة؟"></textarea>
+            <div class="row">
+              <div style="flex:2"><label for="closest_target">الرقم الصحيح</label><input id="closest_target" type="number" placeholder="مثال: 250" /></div>
+              <div style="flex:1"><label for="closest_unit">الوحدة</label><input id="closest_unit" type="text" placeholder="(اختياري)" /></div>
+            </div>
+            <label for="dur_closest">مدة المؤقّت (ثانية)</label>
+            <input id="dur_closest" type="number" value="30" min="5" />
+          </div>
         </div>
-        <button id="armBtn" class="btn mt">🔔 جهّز الباصرة</button>
-        <button id="lockBtn" class="btn ghost mt" disabled>🔒 اقفل الباصرة</button>
+
+        <button id="startBtn" class="btn mt">▶️ ابدأ الجولة</button>
+        <button id="revealBtn" class="btn mt" hidden>🏁 اعرض النتيجة</button>
+        <button id="nextBtn" class="btn secondary mt" hidden>↻ جولة جديدة</button>
+      </div>
+
+      <div id="live" class="card" hidden>
+        <h2 id="liveTitle"></h2>
+        <div id="liveBody"></div>
       </div>
 
       <div class="card">
-        <h2>ترتيب الضغط — الجولة الحالية</h2>
-        <p class="hint" id="buzzEmpty">لسه محدش ضغط في الجولة دي.</p>
-        <ul class="list" id="buzzList"></ul>
-      </div>
-
-      <div class="card">
-        <h2>لوحة النقاط <span class="muted">(<span id="playerCount">0</span> لاعب)</span></h2>
+        <div class="topbar"><h2 style="margin:0">لوحة النقاط <span class="muted">(<span id="playerCount">0</span>)</span></h2>
+          <button id="resetScoresBtn" class="btn ghost" style="width:auto;padding:8px 12px">تصفير</button></div>
         <ul class="list" id="playerList"></ul>
       </div>
     </section>
   </main>
-
   <script type="module" src="./js/host.js"></script>
 </body>
 </html>

@@ -94,3 +94,42 @@ export function formatDelta(ms) {
   if (ms < 1000) return `+${Math.round(ms)} مل.ث`;
   return `+${(ms / 1000).toFixed(2)} ث`;
 }
+
+// قراءة باراميتر من الرابط (?code=ABCD)
+export function urlParam(name) {
+  return new URLSearchParams(location.search).get(name) || '';
+}
+
+// تطبيع النص العربي للمقارنة (Family Feud): إزالة التشكيل وتوحيد الحروف.
+export function normalizeAr(s) {
+  return String(s ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[ً-ْـ]/g, '') // تشكيل + تطويل
+    .replace(/[إأآا]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ة/g, 'ه')
+    .replace(/[ؤئ]/g, 'ء')
+    .replace(/[^ء-يa-z0-9 ]/g, '') // رموز
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// الوقت المتبقّي (ثوانٍ) لجولة بدأت في startedAt ومدتها duration (ثانية).
+export function remainingSeconds(startedAt, duration) {
+  if (!startedAt || !duration) return 0;
+  const elapsed = (Date.now() - new Date(startedAt).getTime()) / 1000;
+  return Math.max(0, Math.ceil(duration - elapsed));
+}
+
+// أصوات إضافية للأوضاع الجديدة.
+export function playTick() {
+  tone(660, 0.05, 'sine', 0.12, 0);
+}
+export function playCorrect() {
+  tone(659.25, 0.12, 'sine', 0.22, 0);
+  tone(987.77, 0.18, 'sine', 0.22, 0.12);
+}
+export function playWrong() {
+  tone(220, 0.22, 'sawtooth', 0.18, 0);
+}

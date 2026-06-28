@@ -1,53 +1,46 @@
-// منطق المضيف: إنشاء غرفة، تجهيز/قفل، ترتيب الضغط، النقاط، الأسئلة.
+// منطق المضيف: إنشاء غرفة، اختيار وضع اللعب، تأليف السؤال، بدء الجولة/كشف النتيجة، النقاط.
 import { supabase } from './supabase.js';
-import { $, escapeHtml, formatDelta, generateRoomCode, store } from './common.js';
+import { $, $$, escapeHtml, formatDelta, generateRoomCode, normalizeAr, store } from './common.js';
+import { MODES, MODE_LIST, mcqPoints, CLOSEST_POINTS } from './modes.js';
 
 let room = null;             // صف الغرفة الحالي
 const players = new Map();   // id -> player
-let buzzes = [];             // ضغطات الجولة الحالية (مرتبة)
+let buzzes = [];             // ضغطات الجولة الحالية (buzz)
+let answers = [];            // إجابات الجولة الحالية (mcq/feud/closest)
 let channel = null;
+let timer = null;            // مؤقّت الكشف التلقائي
+let authorMode = 'buzz';     // الوضع المختار في نموذج التأليف
+const scored = new Set();    // الجولات اللي اتحسبت نقاطها (منع التكرار)
 
 const el = {
-  setup: $('#setup'),
-  dashboard: $('#dashboard'),
-  createBtn: $('#createBtn'),
-  resumeBox: $('#resumeBox'),
-  resumeBtn: $('#resumeBtn'),
-  newRoomBtn: $('#newRoomBtn'),
-  code: $('#roomCode'),
-  copyBtn: $('#copyBtn'),
-  question: $('#questionInput'),
-  showQuestionBtn: $('#showQuestionBtn'),
-  armBtn: $('#armBtn'),
-  lockBtn: $('#lockBtn'),
-  stateLabel: $('#stateLabel'),
-  roundLabel: $('#roundLabel'),
-  buzzList: $('#buzzList'),
-  buzzEmpty: $('#buzzEmpty'),
-  playerList: $('#playerList'),
-  playerCount: $('#playerCount'),
+  setup: $('#setup'), dashboard: $('#dashboard'),
+  createBtn: $('#createBtn'), resumeBox: $('#resumeBox'), resumeBtn: $('#resumeBtn'), newRoomBtn: $('#newRoomBtn'),
+  code: $('#roomCode'), copyBtn: $('#copyBtn'), displayLink: $('#displayLink'),
+  modePicker: $('#modePicker'),
+  forms: $('#forms'),
+  startBtn: $('#startBtn'), revealBtn: $('#revealBtn'), nextBtn: $('#nextBtn'),
+  phaseLabel: $('#phaseLabel'), roundLabel: $('#roundLabel'), timerLabel: $('#timerLabel'),
+  live: $('#live'), liveTitle: $('#liveTitle'), liveBody: $('#liveBody'),
+  playerList: $('#playerList'), playerCount: $('#playerCount'), resetScoresBtn: $('#resetScoresBtn'),
 };
 
-// ---------- إنشاء/استئناف الغرفة ----------
+// ============ إنشاء/استئناف الغرفة ============
 async function createRoom() {
   el.createBtn.disabled = true;
   let created = null, lastErr = null;
   for (let i = 0; i < 8; i++) {
     const code = generateRoomCode(4);
-    const { data, error } = await supabase
-      .from('rooms')
-      .insert({ code, state: 'lobby', round: 0, question: '' })
-      .select()
-      .single();
+    const { data, error } = await supabase.from('rooms')
+      .insert({ code, mode: 'buzz', phase: 'lobby', round: 0, question: '', payload: {} })
+      .select().single();
     if (!error) { created = data; break; }
     lastErr = error;
-    if (error.code !== '23505') break; // 23505 = تعارض كود فريد، جرّب تاني
+    if (error.code !== '23505') break;
   }
   el.createBtn.disabled = false;
-  if (!created) { alert('تعذّر إنشاء الغرفة: ' + (lastErr?.message || 'خطأ غير معروف')); return; }
+  if (!created) { alert('تعذّر إنشاء الغرفة: ' + (lastErr?.message || 'خطأ')); return; }
   room = created;
-  store.roomId = room.id;
-  store.code = room.code;
+  store.roomId = room.id; store.code = room.code;
   await enterDashboard();
 }
 
@@ -64,142 +57,380 @@ async function enterDashboard() {
   el.setup.hidden = true;
   el.dashboard.hidden = false;
   el.code.textContent = room.code;
-  el.question.value = room.question || '';
-  updateStatus();
+  el.displayLink.href = `./display.html?code=${room.code}`;
+  renderModePicker();
+  selectMode(room.mode || 'buzz');
+  updatePhase();
   await loadPlayers();
-  await refreshBuzzes();
+  await refreshRound();
   subscribe();
 }
 
-// ---------- التحميل والاشتراك اللحظي ----------
+// ============ تحميل واشتراك لحظي ============
 async function loadPlayers() {
-  const { data } = await supabase
-    .from('players').select('*').eq('room_id', room.id).order('joined_at', { ascending: true });
+  const { data } = await supabase.from('players').select('*').eq('room_id', room.id).order('joined_at');
   players.clear();
   (data || []).forEach((p) => players.set(p.id, p));
   renderPlayers();
 }
 
-async function refreshBuzzes() {
-  const { data } = await supabase
-    .from('buzzes')
-    .select('id, player_id, created_at, round')
-    .eq('room_id', room.id)
-    .eq('round', room.round)
-    .order('created_at', { ascending: true });
-  buzzes = data || [];
-  renderBuzzes();
+async function refreshRound() {
+  if (room.mode === 'buzz') {
+    const { data } = await supabase.from('buzzes').select('*')
+      .eq('room_id', room.id).eq('round', room.round).order('created_at');
+    buzzes = data || []; answers = [];
+  } else {
+    const { data } = await supabase.from('answers').select('*')
+      .eq('room_id', room.id).eq('round', room.round).order('created_at');
+    answers = data || []; buzzes = [];
+  }
+  renderLive();
 }
 
 function subscribe() {
   if (channel) supabase.removeChannel(channel);
   channel = supabase.channel('host-' + room.id);
-  channel.on('postgres_changes',
-    { event: '*', schema: 'public', table: 'players', filter: `room_id=eq.${room.id}` },
-    (payload) => handlePlayerChange(payload));
-  channel.on('postgres_changes',
-    { event: 'INSERT', schema: 'public', table: 'buzzes', filter: `room_id=eq.${room.id}` },
-    (payload) => { if (payload.new.round === room.round) refreshBuzzes(); });
+  channel.on('postgres_changes', { event: '*', schema: 'public', table: 'players', filter: `room_id=eq.${room.id}` },
+    (p) => { handlePlayerChange(p); });
+  channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'buzzes', filter: `room_id=eq.${room.id}` },
+    (p) => onBuzz(p.new));
+  channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'answers', filter: `room_id=eq.${room.id}` },
+    (p) => onAnswer(p.new));
   channel.subscribe();
 }
 
 function handlePlayerChange({ eventType, new: n, old: o }) {
-  if (eventType === 'DELETE') players.delete(o.id);
-  else players.set(n.id, n);
+  if (eventType === 'DELETE') players.delete(o.id); else players.set(n.id, n);
   renderPlayers();
 }
 
-// ---------- أفعال المضيف ----------
-async function showQuestion() {
-  const q = el.question.value.trim();
-  const { data, error } = await supabase
-    .from('rooms').update({ question: q }).eq('id', room.id).select().single();
-  if (error) { alert(error.message); return; }
-  room = data;
-  flash(el.showQuestionBtn, 'تم العرض ✓');
-}
-
-async function arm() {
-  const q = el.question.value.trim();
-  const { data, error } = await supabase
-    .from('rooms')
-    .update({ state: 'armed', round: room.round + 1, question: q })
-    .eq('id', room.id).select().single();
-  if (error) { alert(error.message); return; }
-  room = data;
-  buzzes = [];
-  renderBuzzes();
-  updateStatus();
-}
-
-async function lock() {
-  const { data, error } = await supabase
-    .from('rooms').update({ state: 'locked' }).eq('id', room.id).select().single();
-  if (error) { alert(error.message); return; }
-  room = data;
-  updateStatus();
-}
-
-async function changeScore(playerId, delta) {
-  const p = players.get(playerId);
-  if (!p) return;
-  const newScore = (p.score || 0) + delta;
-  p.score = newScore; // متفائل
-  renderPlayers();
-  const { error } = await supabase.from('players').update({ score: newScore }).eq('id', playerId);
-  if (error) { alert(error.message); await loadPlayers(); }
-}
-
-async function copyCode() {
-  try {
-    await navigator.clipboard.writeText(room.code);
-    flash(el.copyBtn, 'تم النسخ ✓');
-  } catch (_) {
-    flash(el.copyBtn, room.code);
+async function onBuzz(b) {
+  if (b.round !== room.round || room.mode !== 'buzz') return;
+  if (!buzzes.find((x) => x.id === b.id)) buzzes.push(b);
+  buzzes.sort((a, c) => new Date(a.created_at) - new Date(c.created_at));
+  renderLive();
+  // قفل فوري بعد أول ضغطة
+  if (room.phase === 'live' && room.payload?.lockout && buzzes.length === 1) {
+    await reveal();
   }
 }
 
-// ---------- العرض ----------
-function updateStatus() {
-  const map = { lobby: 'في اللوبي', armed: 'الباصرة جاهزة', locked: 'مقفولة' };
-  el.stateLabel.textContent = map[room.state] || room.state;
-  el.stateLabel.dataset.state = room.state;
-  el.roundLabel.textContent = room.round;
-  el.lockBtn.disabled = room.state !== 'armed';
-  el.armBtn.textContent = room.round === 0 ? 'جهّز الباصرة' : 'جهّز الباصرة (جولة جديدة)';
+async function onAnswer(a) {
+  if (a.round !== room.round) return;
+  if (!answers.find((x) => x.id === a.id)) answers.push(a);
+  if (room.mode === 'feud' && room.phase === 'live') await tryFeudMatch(a);
+  renderLive();
 }
 
-function renderBuzzes() {
-  if (!buzzes.length) {
-    el.buzzList.innerHTML = '';
-    el.buzzEmpty.hidden = false;
+// ============ نموذج اختيار الوضع ============
+function renderModePicker() {
+  el.modePicker.innerHTML = MODE_LIST.map((m) => `
+    <button class="mode-chip" data-mode="${m.key}" title="${escapeHtml(m.desc)}">
+      <span class="me">${m.emoji}</span><span>${m.name}</span>
+    </button>`).join('');
+}
+
+function selectMode(mode) {
+  authorMode = mode;
+  $$('.mode-chip', el.modePicker).forEach((b) => b.classList.toggle('active', b.dataset.mode === mode));
+  $$('.mode-form', el.forms).forEach((f) => { f.hidden = f.dataset.mode !== mode; });
+}
+
+// ============ بدء الجولة ============
+function readDuration(mode) {
+  const v = Number($(`#dur_${mode}`)?.value);
+  return Number.isFinite(v) && v >= 0 ? Math.floor(v) : MODES[mode].defaultDuration;
+}
+
+async function startRound() {
+  const mode = authorMode;
+  let question = '', payload = {}, secret = {};
+
+  if (mode === 'buzz') {
+    question = $('#q_buzz').value.trim();
+    payload = { lockout: $('#buzz_lockout').checked, duration: 0 };
+  } else if (mode === 'mcq') {
+    question = $('#q_mcq').value.trim();
+    const options = $$('.mcq-opt').map((i) => i.value.trim()).filter((x) => x !== '');
+    const correct = Number($('input[name="mcq_correct"]:checked')?.value);
+    if (options.length < 2) return alert('اكتب خيارين على الأقل.');
+    if (!Number.isInteger(correct) || correct >= options.length) return alert('اختر الإجابة الصحيحة.');
+    payload = { options, duration: readDuration('mcq') };
+    secret = { correct };
+  } else if (mode === 'feud') {
+    question = $('#q_feud').value.trim();
+    const rows = $$('.feud-row').map((r) => ({
+      text: r.querySelector('.feud-text').value.trim(),
+      points: Number(r.querySelector('.feud-points').value) || 10,
+    })).filter((a) => a.text !== '');
+    if (!rows.length) return alert('أضف إجابة واحدة على الأقل.');
+    payload = { duration: readDuration('feud'), total: rows.length, revealed: [] };
+    secret = { accepted: rows.map((a) => ({ ...a, norm: normalizeAr(a.text) })) };
+  } else if (mode === 'closest') {
+    question = $('#q_closest').value.trim();
+    const target = Number($('#closest_target').value);
+    if (!Number.isFinite(target)) return alert('اكتب الرقم الصحيح (الهدف).');
+    payload = { duration: readDuration('closest'), unit: $('#closest_unit').value.trim() };
+    secret = { target };
+  }
+  if (!question) return alert('اكتب نص السؤال.');
+
+  const round = room.round + 1;
+  const { data, error } = await supabase.from('rooms').update({
+    mode, phase: 'live', round, question, payload, round_started_at: new Date().toISOString(),
+  }).eq('id', room.id).select().single();
+  if (error) return alert(error.message);
+
+  room = data;
+  buzzes = []; answers = [];
+  saveSecret(round, secret);
+  selectMode(mode);
+  updatePhase();
+  renderLive();
+  startTimer();
+}
+
+// ============ كشف النتيجة + الحساب ============
+async function reveal() {
+  stopTimer();
+  if (room.phase !== 'live') return;
+  const round = room.round;
+  let payload = { ...(room.payload || {}) };
+
+  if (!scored.has(round)) {
+    scored.add(round);
+    if (room.mode === 'mcq') payload = await scoreMcq(payload);
+    else if (room.mode === 'closest') payload = await scoreClosest(payload);
+    else if (room.mode === 'feud') payload = await scoreFeudRemaining(payload);
+    // buzz: النقاط يدوية عبر أزرار +/-
+  }
+
+  const { data, error } = await supabase.from('rooms')
+    .update({ phase: 'reveal', payload }).eq('id', room.id).select().single();
+  if (error) return alert(error.message);
+  room = data;
+  updatePhase();
+  renderLive();
+}
+
+async function scoreMcq(payload) {
+  const secret = loadSecret(room.round);
+  const startMs = new Date(room.round_started_at).getTime();
+  const durMs = (payload.duration || 0) * 1000;
+  const dist = new Array((payload.options || []).length).fill(0);
+  // إجابة واحدة لكل لاعب (الأولى)
+  const seen = new Set();
+  const ordered = [...answers].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  for (const a of ordered) {
+    if (seen.has(a.player_id)) continue;
+    seen.add(a.player_id);
+    const idx = Number(a.value);
+    if (idx >= 0 && idx < dist.length) dist[idx]++;
+    const correct = idx === secret?.correct;
+    const pts = mcqPoints(correct, new Date(a.created_at).getTime() - startMs, durMs);
+    await supabase.from('answers').update({ is_correct: correct, points: pts }).eq('id', a.id);
+    if (pts) await addScore(a.player_id, pts);
+  }
+  return { ...payload, correct: secret?.correct, dist };
+}
+
+async function scoreClosest(payload) {
+  const secret = loadSecret(room.round);
+  const target = secret?.target ?? 0;
+  const seen = new Set();
+  const valid = [];
+  for (const a of [...answers].sort((x, y) => new Date(x.created_at) - new Date(y.created_at))) {
+    if (seen.has(a.player_id)) continue;
+    seen.add(a.player_id);
+    const num = Number(a.value);
+    if (Number.isFinite(num)) valid.push({ ...a, num, diff: Math.abs(num - target) });
+  }
+  valid.sort((a, b) => a.diff - b.diff || new Date(a.created_at) - new Date(b.created_at));
+  const results = [];
+  for (let i = 0; i < valid.length; i++) {
+    const pts = CLOSEST_POINTS[i] || 0;
+    await supabase.from('answers').update({ points: pts, is_correct: i === 0 }).eq('id', valid[i].id);
+    if (pts) await addScore(valid[i].player_id, pts);
+    results.push({ player_id: valid[i].player_id, value: valid[i].num, diff: valid[i].diff, points: pts });
+  }
+  return { ...payload, target, results };
+}
+
+async function scoreFeudRemaining(payload) {
+  // كشف الإجابات اللي ما حدش جابها (بدون نقاط) عند انتهاء الوقت
+  const secret = loadSecret(room.round);
+  const revealedNorms = new Set((payload.revealed || []).map((r) => normalizeAr(r.text)));
+  const missed = (secret?.accepted || []).filter((a) => !revealedNorms.has(a.norm))
+    .map((a) => ({ text: a.text, points: a.points, by: null }));
+  return { ...payload, revealed: [...(payload.revealed || []), ...missed] };
+}
+
+async function tryFeudMatch(answer) {
+  const secret = loadSecret(room.round);
+  if (!secret?.accepted) return;
+  const norm = normalizeAr(answer.value);
+  const revealed = room.payload?.revealed || [];
+  if (revealed.some((r) => normalizeAr(r.text) === norm)) return; // مكشوفة قبل كده
+  const hit = secret.accepted.find((a) => a.norm === norm);
+  if (!hit) return;
+  const newRevealed = [...revealed, { text: hit.text, points: hit.points, by: answer.player_id }];
+  const { data, error } = await supabase.from('rooms')
+    .update({ payload: { ...room.payload, revealed: newRevealed } }).eq('id', room.id).select().single();
+  if (error) return;
+  room = data;
+  await supabase.from('answers').update({ is_correct: true, points: hit.points }).eq('id', answer.id);
+  await addScore(answer.player_id, hit.points);
+}
+
+async function addScore(playerId, delta) {
+  const p = players.get(playerId);
+  const base = p ? (p.score || 0) : 0;
+  const newScore = base + delta;
+  if (p) { p.score = newScore; renderPlayers(); }
+  await supabase.from('players').update({ score: newScore }).eq('id', playerId);
+}
+
+async function nextRound() {
+  // العودة لشاشة التأليف (الوضع الحالي محفوظ)
+  const { data } = await supabase.from('rooms').update({ phase: 'lobby' }).eq('id', room.id).select().single();
+  if (data) room = data;
+  buzzes = []; answers = [];
+  updatePhase();
+  renderLive();
+}
+
+// ============ النقاط اليدوية ============
+async function changeScore(playerId, delta) {
+  await addScore(playerId, delta);
+}
+
+async function resetScores() {
+  if (!confirm('تصفير كل النقاط؟')) return;
+  for (const p of players.values()) { p.score = 0; }
+  renderPlayers();
+  await supabase.from('players').update({ score: 0 }).eq('room_id', room.id);
+}
+
+// ============ المؤقّت ============
+function startTimer() {
+  stopTimer();
+  const dur = room.payload?.duration || 0;
+  if (!dur) return;
+  timer = setInterval(() => {
+    const left = remaining();
+    el.timerLabel.textContent = left > 0 ? `⏱ ${left}` : '⏱ 0';
+    if (left <= 0) { stopTimer(); reveal(); }
+  }, 250);
+}
+function stopTimer() { if (timer) { clearInterval(timer); timer = null; } el.timerLabel.textContent = ''; }
+function remaining() {
+  const dur = room.payload?.duration || 0;
+  if (!dur || !room.round_started_at) return 0;
+  return Math.max(0, Math.ceil(dur - (Date.now() - new Date(room.round_started_at).getTime()) / 1000));
+}
+
+// ============ العرض ============
+function updatePhase() {
+  const map = { lobby: 'جاهز', live: 'الجولة شغّالة', reveal: 'عرض النتيجة' };
+  el.phaseLabel.textContent = map[room.phase] || room.phase;
+  el.phaseLabel.dataset.phase = room.phase;
+  el.roundLabel.textContent = room.round;
+  const live = room.phase === 'live';
+  el.startBtn.hidden = live;
+  el.revealBtn.hidden = !live;
+  el.nextBtn.hidden = room.phase !== 'reveal';
+  el.modePicker.classList.toggle('disabled', live);
+  el.forms.classList.toggle('disabled', live);
+}
+
+function renderLive() {
+  const m = MODES[room.mode];
+  if (room.phase === 'lobby') {
+    el.live.hidden = true;
     return;
   }
-  el.buzzEmpty.hidden = true;
+  el.live.hidden = false;
+  el.liveTitle.textContent = `${m.emoji} ${m.name} — ${escapeHtml(room.question || '')}`;
+
+  if (room.mode === 'buzz') return renderBuzzLive();
+  if (room.mode === 'mcq') return renderMcqLive();
+  if (room.mode === 'feud') return renderFeudLive();
+  if (room.mode === 'closest') return renderClosestLive();
+}
+
+function renderBuzzLive() {
+  if (!buzzes.length) { el.liveBody.innerHTML = '<p class="hint">لسه محدش ضغط…</p>'; return; }
   const t0 = new Date(buzzes[0].created_at).getTime();
   const medals = ['🥇', '🥈', '🥉'];
-  el.buzzList.innerHTML = buzzes.map((b, i) => {
+  el.liveBody.innerHTML = '<ul class="list">' + buzzes.map((b, i) => {
     const name = players.get(b.player_id)?.name || 'لاعب';
-    const delta = new Date(b.created_at).getTime() - t0;
-    const rankBadge = medals[i] || `#${i + 1}`;
+    const d = new Date(b.created_at).getTime() - t0;
     return `<li class="buzz-row${i === 0 ? ' first' : ''}">
-      <span class="rank">${rankBadge}</span>
+      <span class="rank">${medals[i] || '#' + (i + 1)}</span>
       <span class="who">${escapeHtml(name)}</span>
-      <span class="delta">${formatDelta(i === 0 ? 0 : delta)}</span>
+      <span class="delta">${formatDelta(i === 0 ? 0 : d)}</span>
+      ${room.phase === 'reveal' ? `<button class="mini plus" data-id="${b.player_id}" data-d="1">+1</button>` : ''}
     </li>`;
-  }).join('');
+  }).join('') + '</ul>';
+}
+
+function renderMcqLive() {
+  const opts = room.payload?.options || [];
+  const answered = new Set(answers.map((a) => a.player_id)).size;
+  if (room.phase === 'live') {
+    el.liveBody.innerHTML = `<p class="big-count">${answered} / ${players.size} جاوبوا</p>
+      <div class="opt-grid">${opts.map((o, i) => `<div class="opt">${'ABCD'[i] || i + 1}. ${escapeHtml(o)}</div>`).join('')}</div>`;
+    return;
+  }
+  const dist = room.payload?.dist || [];
+  const correct = room.payload?.correct;
+  const max = Math.max(1, ...dist);
+  el.liveBody.innerHTML = `<div class="opt-grid">${opts.map((o, i) => `
+    <div class="opt ${i === correct ? 'correct' : ''}">
+      <span>${'ABCD'[i] || i + 1}. ${escapeHtml(o)} ${i === correct ? '✓' : ''}</span>
+      <span class="bar" style="--w:${(dist[i] || 0) / max * 100}%"></span>
+      <small>${dist[i] || 0}</small>
+    </div>`).join('')}</div>`;
+}
+
+function renderFeudLive() {
+  const total = room.payload?.total || 0;
+  const revealed = room.payload?.revealed || [];
+  const slots = [];
+  for (let i = 0; i < total; i++) {
+    const r = revealed[i];
+    slots.push(r
+      ? `<li class="feud-slot done"><span>${escapeHtml(r.text)}</span><b>+${r.points}${r.by ? '' : ' (لم تُذكر)'}</b></li>`
+      : `<li class="feud-slot"><span>؟</span></li>`);
+  }
+  const guesses = answers.length;
+  el.liveBody.innerHTML = `<p class="hint">${revealed.filter((r) => r.by).length}/${total} انكشفت · ${guesses} تخمين</p>
+    <ul class="feud-board">${slots.join('')}</ul>`;
+}
+
+function renderClosestLive() {
+  if (room.phase === 'live') {
+    const answered = new Set(answers.map((a) => a.player_id)).size;
+    el.liveBody.innerHTML = `<p class="big-count">${answered} / ${players.size} خمّنوا</p>`;
+    return;
+  }
+  const target = room.payload?.target;
+  const unit = room.payload?.unit || '';
+  const results = room.payload?.results || [];
+  const medals = ['🥇', '🥈', '🥉'];
+  el.liveBody.innerHTML = `<p class="big-count">الرقم الصحيح: ${target} ${escapeHtml(unit)}</p>
+    <ul class="list">${results.slice(0, 8).map((r, i) => `
+      <li class="buzz-row${i === 0 ? ' first' : ''}">
+        <span class="rank">${medals[i] || '#' + (i + 1)}</span>
+        <span class="who">${escapeHtml(players.get(r.player_id)?.name || 'لاعب')}</span>
+        <span class="delta">خمّن ${r.value} (فرق ${r.diff})${r.points ? ` · +${r.points}` : ''}</span>
+      </li>`).join('')}</ul>`;
 }
 
 function renderPlayers() {
-  const list = Array.from(players.values()).sort(
-    (a, b) => (b.score || 0) - (a.score || 0) || new Date(a.joined_at) - new Date(b.joined_at)
-  );
+  const list = [...players.values()].sort((a, b) => (b.score || 0) - (a.score || 0) || new Date(a.joined_at) - new Date(b.joined_at));
   el.playerCount.textContent = list.length;
-  if (!list.length) {
-    el.playerList.innerHTML = '<li class="muted">لسه محدش دخل…</li>';
-    return;
-  }
-  el.playerList.innerHTML = list.map((p) => `
+  el.playerList.innerHTML = list.length ? list.map((p) => `
     <li class="player-row">
       <span class="pname">${escapeHtml(p.name)}</span>
       <span class="pscore">${p.score || 0}</span>
@@ -207,35 +438,59 @@ function renderPlayers() {
         <button class="mini minus" data-id="${p.id}" data-d="-1">−</button>
         <button class="mini plus"  data-id="${p.id}" data-d="1">+</button>
       </span>
-    </li>`).join('');
+    </li>`).join('') : '<li class="muted">لسه محدش دخل…</li>';
 }
 
+// ============ أسرار الجولة (محلياً، عشان ما تتسرّبش للاعبين) ============
+function secretKey(round) { return `buzzer.secret.${room.id}.${round}`; }
+function saveSecret(round, secret) { try { localStorage.setItem(secretKey(round), JSON.stringify(secret)); } catch (_) {} }
+function loadSecret(round) { try { return JSON.parse(localStorage.getItem(secretKey(round)) || '{}'); } catch (_) { return {}; } }
+
+// ============ أدوات ============
+async function copyCode() {
+  try { await navigator.clipboard.writeText(room.code); flash(el.copyBtn, 'تم النسخ ✓'); }
+  catch (_) { flash(el.copyBtn, room.code); }
+}
 function flash(btn, text) {
-  const old = btn.textContent;
-  btn.textContent = text;
-  btn.classList.add('flash');
+  const old = btn.textContent; btn.textContent = text; btn.classList.add('flash');
   setTimeout(() => { btn.textContent = old; btn.classList.remove('flash'); }, 1100);
 }
 
-// ---------- ربط الأحداث ----------
+// ============ ربط الأحداث ============
 function wire() {
   el.createBtn.addEventListener('click', createRoom);
   el.resumeBtn?.addEventListener('click', resumeRoom);
   el.newRoomBtn?.addEventListener('click', () => { store.clearPlayer(); createRoom(); });
   el.copyBtn.addEventListener('click', copyCode);
-  el.showQuestionBtn.addEventListener('click', showQuestion);
-  el.armBtn.addEventListener('click', arm);
-  el.lockBtn.addEventListener('click', lock);
-  el.playerList.addEventListener('click', (e) => {
-    const btn = e.target.closest('button.mini');
-    if (!btn) return;
-    changeScore(btn.dataset.id, Number(btn.dataset.d));
+  el.modePicker.addEventListener('click', (e) => {
+    const b = e.target.closest('.mode-chip');
+    if (b && room.phase !== 'live') selectMode(b.dataset.mode);
   });
+  el.startBtn.addEventListener('click', startRound);
+  el.revealBtn.addEventListener('click', reveal);
+  el.nextBtn.addEventListener('click', nextRound);
+  el.resetScoresBtn.addEventListener('click', resetScores);
+  // أزرار النقاط (لوحة النقاط + زر +1 بجانب أول ضاغط)
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('button.mini');
+    if (!b || !b.dataset.id) return;
+    changeScore(b.dataset.id, Number(b.dataset.d));
+  });
+  // إضافة صف إجابة في Family Feud
+  $('#feud_add')?.addEventListener('click', addFeudRow);
+}
+
+function addFeudRow() {
+  const wrap = $('#feud_rows');
+  const div = document.createElement('div');
+  div.className = 'feud-row';
+  div.innerHTML = `<input class="feud-text" type="text" placeholder="إجابة مقبولة" />
+    <input class="feud-points" type="number" value="10" min="1" />`;
+  wrap.appendChild(div);
 }
 
 function init() {
   wire();
-  if (store.roomId) el.resumeBox.hidden = false; // عرض زر الاستئناف لو فيه غرفة محفوظة
+  if (store.roomId) el.resumeBox.hidden = false;
 }
-
 init();
