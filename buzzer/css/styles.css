@@ -2,7 +2,7 @@
    الباصرة — تصميم مسطّح (Flat) · ألوان كثيرة هادئة · بدون قريدينت
    عربي RTL · موبايل + شاشة كبيرة
    ============================================================ */
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Changa:wght@500;600;700;800&family=Tajawal:wght@400;500;700;800;900&display=swap');
 
 :root {
   /* أسطح */
@@ -13,8 +13,8 @@
 
   /* نص */
   --ink: #16182a;
-  --ink-2: #43475e;
-  --muted: #6b7088;
+  --ink-2: #41455c;
+  --muted: #595d76;
 
   /* لوحة ألوان قوية حيّة (flat) */
   --indigo: #4f46e5;
@@ -44,6 +44,10 @@
 
   /* مقياس مسافات متّسق (polish) */
   --sp-1: 6px; --sp-2: 10px; --sp-3: 16px; --sp-4: 22px; --sp-5: 32px;
+
+  /* خطوط: عنوان مميّز (Changa) + متن مرتّب (Tajawal) */
+  --font-body: "Tajawal", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-head: "Changa", "Tajawal", system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -51,12 +55,16 @@ html, body { height: 100%; }
 
 body {
   margin: 0;
-  font-family: "Tajawal", "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-family: var(--font-body);
   color: var(--ink);
   background: var(--bg);
   min-height: 100dvh;
   -webkit-tap-highlight-color: transparent;
 }
+
+/* عنوان مميّز يخلق هرمية طباعية */
+h1, h2, h3, .brand h1, .card h2, .role h2, .d-center h2, .d-room-code,
+.code-box .code, .d-code-hint, .d-count, .d-target, .question-box, .buzz-btn { font-family: var(--font-head); }
 
 .wrap { max-width: 580px; margin: 0 auto; padding: 24px 16px 56px; }
 
@@ -64,10 +72,7 @@ body {
 .brand { text-align: center; margin: 16px 0 26px; }
 .brand h1 { margin: 0; font-size: 2.5rem; font-weight: 900; letter-spacing: -1px; line-height: 1.05; color: var(--primary); }
 .brand .sub { color: var(--muted); margin-top: 8px; font-size: 1rem; font-weight: 600; }
-.brand .logo {
-  font-size: 2rem; width: 76px; height: 76px; line-height: 76px; margin: 0 auto 10px;
-  border-radius: 24px; background: var(--surface); box-shadow: var(--sh-md); border: 1px solid var(--line);
-}
+.brand .logo { font-size: 2.8rem; line-height: 1; margin: 0 auto 4px; }
 
 /* كروت بيضاء */
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--sp-4); box-shadow: var(--sh-md); margin-bottom: var(--sp-3); }
@@ -117,8 +122,8 @@ textarea { resize: vertical; min-height: 66px; }
 }
 .role::before { content: ""; position: absolute; inset-inline-start: 0; top: 0; bottom: 0; width: 5px; background: var(--accent, var(--primary)); }
 .role:hover { transform: translateY(-3px); box-shadow: var(--sh-lg); }
-.role .emoji { font-size: 1.7rem; flex: 0 0 auto; width: 58px; height: 58px; line-height: 58px; text-align: center; border-radius: 18px; background: var(--accent-soft, var(--surface-2)); }
-.role h3 { margin: 0 0 3px; font-weight: 800; }
+.role .emoji { font-size: 2.4rem; flex: 0 0 auto; line-height: 1; color: var(--accent, var(--primary)); }
+.role h2 { margin: 0 0 3px; font-size: 1.2rem; font-weight: 800; }
 .role p { margin: 0; color: var(--muted); font-size: 0.9rem; font-weight: 500; }
 .roles .role:nth-of-type(1) { --accent: var(--amber);  --accent-soft: rgba(233, 162, 59, 0.14); }
 .roles .role:nth-of-type(2) { --accent: var(--teal);   --accent-soft: rgba(19, 168, 158, 0.14); }
@@ -236,7 +241,6 @@ footer a { color: var(--primary); }
 .feud-slot b { color: var(--teal); }
 
 /* ============ شاشة العرض ============ */
-.display-body { overflow: hidden; }
 .display-stage { position: relative; min-height: 100dvh; padding: 2.4vh 2.6vw; display: flex; flex-direction: column; }
 .d-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .d-room { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.2vh 1.6vw; box-shadow: var(--sh-md); }
@@ -271,7 +275,7 @@ footer a { color: var(--primary); }
 .d-opt.dim { opacity: 0.45; }
 .d-opt-label { font-weight: 900; color: #fff; background: var(--indigo); border-radius: 10px; padding: 0.2em 0.6em; }
 .d-opt-text { flex: 1; font-weight: 800; text-align: start; }
-.d-opt-bar { position: absolute; inset-inline-start: 0; bottom: 0; height: 6px; background: var(--indigo); transition: width 0.4s; }
+.d-opt-bar { position: absolute; inset-inline-start: 0; bottom: 0; height: 6px; background: var(--indigo); }
 .d-opt b { color: var(--primary); }
 
 .d-feud-board { list-style: none; margin: 0 auto; padding: 0; max-width: 820px; display: grid; gap: 1.2vh; }
