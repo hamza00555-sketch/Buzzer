@@ -306,3 +306,8 @@ footer a { color: var(--violet); }
 .pack-btn { flex-direction: column; align-items: flex-start; gap: 2px; text-align: start; }
 .pack-btn small { color: var(--muted); font-weight: 600; font-size: .82rem; }
 .pack-status { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: var(--sp-3); padding-top: var(--sp-3); border-top: 1px solid var(--line); font-weight: 700; color: var(--violet); }
+
+/* ===== شعار التطبيق (الأشبال) ===== */
+.brand-title { margin: 0; line-height: 0; }
+.brand-logo { width: min(64vw, 280px); height: auto; animation: float 3.4s ease-in-out infinite; filter: drop-shadow(0 8px 20px rgba(0,0,0,.45)); }
+.d-top .d-logo { height: clamp(46px, 8vh, 92px); width: auto; filter: drop-shadow(0 6px 14px rgba(0,0,0,.4)); }

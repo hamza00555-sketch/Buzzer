@@ -4,16 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#16122b" />
-  <title>شاشة العرض — الباصرة</title>
+  <link rel="icon" type="image/png" href="./img/logo.png" />
+  <title>شاشة العرض — الأشبال</title>
   <link rel="stylesheet" href="./css/styles.css" />
 </head>
 <body class="display-body">
   <!-- إدخال الكود -->
   <section id="join" class="wrap">
     <header class="brand">
-      <span class="logo"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg></span>
-      <h1>شاشة العرض</h1>
-      <p class="sub">اعرضها على التلفزيون — يتابعها الجمهور</p>
+      <h1 class="brand-title"><img class="brand-logo" src="./img/logo.png" alt="الأشبال" /></h1>
+      <p class="sub">شاشة العرض — اعرضها على التلفزيون</p>
     </header>
     <div class="card">
       <label for="codeInput">كود الغرفة</label>
@@ -28,6 +28,7 @@
   <section id="stage" class="display-stage" hidden>
     <div id="confetti" class="confetti"></div>
     <header class="d-top">
+      <img class="d-logo" src="./img/logo.png" alt="الأشبال" />
       <div class="d-room">
         <span class="d-room-label">كود الدخول</span>
         <span class="d-room-code" id="bigCode">----</span>
@@ -35,7 +36,7 @@
       <div class="d-status">
         <span class="chip" id="phaseLabel" data-phase="lobby">بانتظار البدء</span>
         <span class="chip d-timer" id="timerLabel"></span>
-        <span class="chip">👥 <strong id="playerCount">0</strong></span>
+        <span class="chip"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20v-1a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v1"/><path d="M16 4.6a3 3 0 0 1 0 5.8"/><path d="M21 20v-1a5 5 0 0 0-3-4.6"/></svg> <strong id="playerCount">0</strong></span>
       </div>
     </header>
 
