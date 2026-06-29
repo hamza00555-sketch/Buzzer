@@ -20,11 +20,9 @@
   /* ألوان اللوقو: بنفسجي-أرجواني + ذهبي + درجات منسجمة */
   --violet: #d56ff2;  --violet-btn: #8b21c4;   /* أرجواني اللوقو */
   --amber:  #f8c81a;  --amber-d: #b5790a;       /* ذهبي اللوقو */
-  --coral:  #ec4899;  --coral-d: #be185d;       /* وردي/ماجنتا (عائلة البنفسجي) */
   --teal:   #2dd4bf;  --teal-d:  #0f9b8a;       /* تركواز داعم */
-  --indigo: #8b7cf6;
-  --sky:    #38bdf8;
-  --pink:   #ff73d1;
+  --indigo: #8b7cf6;                            /* نيلي (عائلة البنفسجي) */
+  --coral:  #ef4444;  --coral-d: #c81e1e;       /* أحمر — للحذف/الخطأ فقط */
   --green:  #34d399;
 
   --primary: var(--violet);
@@ -129,7 +127,7 @@ textarea { resize: vertical; min-height: 68px; line-height: 1.6; }
 .role p { margin: 0; font-size: 0.94rem; font-weight: 600; line-height: 1.5; color: var(--ink-on); opacity: .82; }
 .roles .role:nth-of-type(1) { --accent: var(--amber);  --ink-on: #2a1c00; animation-delay: .05s; }
 .roles .role:nth-of-type(2) { --accent: var(--violet); --ink-on: #2a1240; animation-delay: .12s; }
-.roles .role:nth-of-type(3) { --accent: var(--coral);  --ink-on: #3a0011; animation-delay: .19s; }
+.roles .role:nth-of-type(3) { --accent: var(--indigo); --ink-on: #1a1140; animation-delay: .19s; }
 
 /* ===== كود الغرفة ===== */
 .code-box { text-align: center; }
@@ -196,7 +194,7 @@ footer a { color: var(--amber); }
 .mode-chip[data-mode="buzz"].active    { background: var(--amber); color: #2a1c00; }
 .mode-chip[data-mode="mcq"].active     { background: var(--violet-btn); }
 .mode-chip[data-mode="feud"].active    { background: var(--indigo); color: #1a1140; }
-.mode-chip[data-mode="closest"].active { background: var(--coral); color: #3a0011; }
+.mode-chip[data-mode="closest"].active { background: var(--teal-d); color: #fff; }
 
 .check { display: flex; align-items: center; gap: 9px; color: var(--ink); font-weight: 700; }
 .check input { width: auto; }
@@ -213,7 +211,7 @@ footer a { color: var(--amber); }
 .opt small { color: var(--muted); }
 .opt-grid.play .opt-btn { font-size: 1.06rem; min-height: 68px; text-align: start; }
 .opt-btn { display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: var(--radius-sm); cursor: pointer; color: var(--ink); background: var(--surface-2); border: 2px solid var(--line-2); font-family: inherit; font-weight: 800; transition: transform .08s, border-color .12s, background .12s; animation: pop .28s ease both; }
-.opt-grid.play .opt-btn:nth-of-type(1) b { background: var(--coral); }
+.opt-grid.play .opt-btn:nth-of-type(1) b { background: var(--indigo); color: #1a1140; }
 .opt-grid.play .opt-btn:nth-of-type(2) b { background: var(--violet-btn); }
 .opt-grid.play .opt-btn:nth-of-type(3) b { background: var(--amber); color: #2a1c00; }
 .opt-grid.play .opt-btn:nth-of-type(4) b { background: var(--teal-d); }
@@ -268,7 +266,7 @@ footer a { color: var(--amber); }
 .d-delta { color: var(--muted); font-size: 0.7em; font-weight: 600; }
 .d-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 1.4vh 1.6vw; max-width: 1040px; margin: 0 auto; }
 .d-opt { position: relative; display: flex; align-items: center; gap: 14px; padding: 2vh 1.6vw; border-radius: var(--radius); background: var(--surface-2); box-shadow: inset 0 0 0 2px var(--line-2); overflow: hidden; font-size: clamp(1.1rem, 2.2vw, 1.8rem); }
-.d-opt.c0 { box-shadow: inset 0 0 0 2px var(--coral); }  .d-opt.c0 .d-opt-label { background: var(--coral); color:#3a0011; }
+.d-opt.c0 { box-shadow: inset 0 0 0 2px var(--indigo); }  .d-opt.c0 .d-opt-label { background: var(--indigo); color:#1a1140; }
 .d-opt.c1 { box-shadow: inset 0 0 0 2px var(--violet); } .d-opt.c1 .d-opt-label { background: var(--violet-btn); }
 .d-opt.c2 { box-shadow: inset 0 0 0 2px var(--amber); }  .d-opt.c2 .d-opt-label { background: var(--amber); color:#2a1c00; }
 .d-opt.c3 { box-shadow: inset 0 0 0 2px var(--teal); }   .d-opt.c3 .d-opt-label { background: var(--teal-d); }

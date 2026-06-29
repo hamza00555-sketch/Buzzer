@@ -8,7 +8,7 @@
     <circle cx="160"  cy="170"  r="240" fill="#d56ff2" fill-opacity="0.22" />
     <circle cx="1080" cy="250"  r="200" fill="#f8c81a" fill-opacity="0.16" />
     <circle cx="1030" cy="1040" r="270" fill="#8b21c4" fill-opacity="0.24" />
-    <circle cx="210"  cy="1070" r="180" fill="#ec4899" fill-opacity="0.14" />
+    <circle cx="210"  cy="1070" r="180" fill="#2dd4bf" fill-opacity="0.12" />
     <circle cx="620"  cy="600"  r="160" fill="#8b7cf6" fill-opacity="0.12" />
   </g>
 </svg>
