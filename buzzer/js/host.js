@@ -2,6 +2,7 @@
 import { supabase } from './supabase.js';
 import { $, $$, escapeHtml, formatDelta, generateRoomCode, normalizeAr, store } from './common.js';
 import { MODES, MODE_LIST, mcqPoints, CLOSEST_POINTS } from './modes.js';
+import { QUESTIONS } from './questions.js';
 
 let room = null;             // صف الغرفة الحالي
 const players = new Map();   // id -> player
@@ -501,6 +502,11 @@ function wire() {
   });
   // إضافة صف إجابة في Family Feud
   $('#feud_add')?.addEventListener('click', addFeudRow);
+  // أزرار "مثال جاهز" لكل وضع
+  el.forms.addEventListener('click', (e) => {
+    const d = e.target.closest('.demo-btn');
+    if (d) fillDemo(d.dataset.demo);
+  });
   // كشف إجابات Family Feud وإسنادها للاعب
   el.liveBody.addEventListener('click', (e) => {
     const pick = e.target.closest('[data-feud-pick]');
@@ -509,6 +515,33 @@ function wire() {
     if (assign) { revealFeud(Number(assign.dataset.feudAssign), assign.dataset.player || null); return; }
     if (e.target.closest('[data-feud-cancel]')) { pendingFeud = null; renderLive(); return; }
   });
+}
+
+// ملء النموذج بسؤال جاهز من بنك الأسئلة (يتنقّل بينها مع كل ضغطة).
+const demoIdx = { buzz: 0, mcq: 0, feud: 0, closest: 0 };
+function fillDemo(mode) {
+  const bank = QUESTIONS[mode];
+  if (!bank || !bank.length) return;
+  const item = bank[demoIdx[mode] % bank.length];
+  demoIdx[mode]++;
+  if (mode === 'buzz') {
+    $('#q_buzz').value = item.q;
+  } else if (mode === 'mcq') {
+    $('#q_mcq').value = item.q;
+    const opts = $$('.mcq-opt');
+    opts.forEach((o, i) => { o.value = item.options[i] || ''; });
+    const radio = document.querySelector(`input[name="mcq_correct"][value="${item.correct}"]`);
+    if (radio) radio.checked = true;
+  } else if (mode === 'feud') {
+    $('#q_feud').value = item.q;
+    $('#feud_rows').innerHTML = item.answers.map((a) =>
+      `<div class="feud-row"><input class="feud-text" type="text" value="${escapeHtml(a.text)}" />` +
+      `<input class="feud-points" type="number" value="${a.points}" min="1" /></div>`).join('');
+  } else if (mode === 'closest') {
+    $('#q_closest').value = item.q;
+    $('#closest_target').value = item.target;
+    $('#closest_unit').value = item.unit || '';
+  }
 }
 
 function addFeudRow() {
