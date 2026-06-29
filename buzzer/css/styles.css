@@ -117,17 +117,19 @@ textarea { resize: vertical; min-height: 68px; line-height: 1.6; }
 .roles { display: grid; gap: var(--sp-3); }
 .role {
   display: flex; align-items: center; gap: var(--sp-3); text-decoration: none; border-radius: var(--radius);
-  padding: var(--sp-4); box-shadow: var(--sh-md); background: var(--accent); color: var(--ink-on);
-  transition: transform .14s, box-shadow .15s; animation: rise .5s both;
+  padding: var(--sp-3) var(--sp-4); box-shadow: var(--sh-md); background: var(--surface); color: var(--ink);
+  position: relative; overflow: hidden; transition: transform .14s, box-shadow .15s; animation: rise .5s both;
 }
+.role::before { content: ""; position: absolute; inset-inline-start: 0; top: 0; bottom: 0; width: 6px; background: var(--accent, var(--violet)); }
 .role:hover { transform: translateY(-4px) scale(1.01); box-shadow: var(--sh-lg); }
-.role .emoji { font-size: 2.7rem; display: inline-flex; line-height: 1; }
-.role h2 { margin: 0 0 4px; font-size: 1.25rem; font-weight: 700; color: var(--ink-on); }
+.role .emoji { display: inline-flex; line-height: 0; flex: 0 0 auto; }
+.role .emoji img { width: 72px; height: 72px; object-fit: contain; display: block; filter: drop-shadow(0 4px 10px rgba(0,0,0,.4)); }
+.role h2 { margin: 0 0 4px; font-size: 1.25rem; font-weight: 700; color: var(--ink); }
 .role h2::before { display: none; }
-.role p { margin: 0; font-size: 0.94rem; font-weight: 600; line-height: 1.5; color: var(--ink-on); opacity: .82; }
-.roles .role:nth-of-type(1) { --accent: var(--amber);  --ink-on: #2a1c00; animation-delay: .05s; }
-.roles .role:nth-of-type(2) { --accent: var(--violet); --ink-on: #2a1240; animation-delay: .12s; }
-.roles .role:nth-of-type(3) { --accent: var(--indigo); --ink-on: #1a1140; animation-delay: .19s; }
+.role p { margin: 0; font-size: 0.94rem; font-weight: 600; line-height: 1.5; color: var(--muted); }
+.roles .role:nth-of-type(1) { --accent: var(--amber);  animation-delay: .05s; }
+.roles .role:nth-of-type(2) { --accent: var(--violet); animation-delay: .12s; }
+.roles .role:nth-of-type(3) { --accent: var(--indigo); animation-delay: .19s; }
 
 /* ===== كود الغرفة ===== */
 .code-box { text-align: center; }
