@@ -2,7 +2,7 @@
    الباصرة — ثيم داكن نابض بالألوان · أيقونات SVG · أنيميشن
    مسطّح بلا تدرّجات · عربي RTL · Impeccable-clean
    ============================================================ */
-@import url('https://fonts.googleapis.com/css2?family=Lalezar&family=Tajawal:wght@400;500;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap');
 
 :root {
   /* أسطح أرجوانية عميقة (مستمدّة من اللوقو) */
@@ -37,7 +37,7 @@
   --sp-1: 6px; --sp-2: 10px; --sp-3: 16px; --sp-4: 22px; --sp-5: 32px; --sp-6: 48px;
 
   --font-body: "Tajawal", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --font-head: "Lalezar", "Tajawal", system-ui, sans-serif;
+  --font-head: "Baloo Bhaijaan 2", "Tajawal", system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; }
