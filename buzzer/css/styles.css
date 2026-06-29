@@ -123,7 +123,7 @@ textarea { resize: vertical; min-height: 68px; line-height: 1.6; }
 .role::before { content: ""; position: absolute; inset-inline-start: 0; top: 0; bottom: 0; width: 6px; background: var(--accent, var(--violet)); }
 .role:hover { transform: translateY(-4px) scale(1.01); box-shadow: var(--sh-lg); }
 .role .emoji { display: inline-flex; line-height: 0; flex: 0 0 auto; }
-.role .emoji img { width: 72px; height: 72px; object-fit: contain; display: block; filter: drop-shadow(0 4px 10px rgba(0,0,0,.4)); }
+.role .emoji img { width: 104px; height: 104px; object-fit: contain; display: block; margin: -16px -6px; filter: drop-shadow(0 5px 12px rgba(0,0,0,.45)); }
 .role h2 { margin: 0 0 4px; font-size: 1.25rem; font-weight: 700; color: var(--ink); }
 .role h2::before { display: none; }
 .role p { margin: 0; font-size: 0.94rem; font-weight: 600; line-height: 1.5; color: var(--muted); }
