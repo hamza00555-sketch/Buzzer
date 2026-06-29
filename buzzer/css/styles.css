@@ -116,14 +116,15 @@ textarea { resize: vertical; min-height: 68px; line-height: 1.6; }
 /* ===== اختيار الدور (كروت ملوّنة) ===== */
 .roles { display: grid; gap: var(--sp-3); }
 .role {
-  display: flex; align-items: center; gap: var(--sp-3); text-decoration: none; border-radius: var(--radius);
-  padding: var(--sp-3) var(--sp-4); box-shadow: var(--sh-md); background: var(--surface); color: var(--ink);
-  position: relative; overflow: hidden; transition: transform .14s, box-shadow .15s; animation: rise .5s both;
+  display: flex; align-items: center; gap: var(--sp-2); text-decoration: none; border-radius: var(--radius);
+  padding: var(--sp-2) var(--sp-4); box-shadow: var(--sh-md); background: var(--surface); color: var(--ink);
+  position: relative; overflow: visible; transition: transform .14s, box-shadow .15s; animation: rise .5s both;
 }
-.role::before { content: ""; position: absolute; inset-inline-start: 0; top: 0; bottom: 0; width: 6px; background: var(--accent, var(--violet)); }
+.role::before { content: ""; position: absolute; inset-inline-start: 0; top: 10px; bottom: 10px; width: 6px; border-radius: 99px; background: var(--accent, var(--violet)); }
 .role:hover { transform: translateY(-4px) scale(1.01); box-shadow: var(--sh-lg); }
-.role .emoji { display: inline-flex; line-height: 0; flex: 0 0 auto; }
-.role .emoji img { width: 104px; height: 104px; object-fit: contain; display: block; margin: -16px -6px; filter: drop-shadow(0 5px 12px rgba(0,0,0,.45)); }
+/* الأيقونة أكبر من الكرت وتطلع خارج حدوده (ستيكر) */
+.role .emoji { display: inline-flex; line-height: 0; flex: 0 0 auto; position: relative; z-index: 5; }
+.role .emoji img { width: 140px; height: 140px; object-fit: contain; display: block; margin: -34px -10px -34px -4px; filter: drop-shadow(0 8px 16px rgba(0,0,0,.5)); }
 .role h2 { margin: 0 0 4px; font-size: 1.25rem; font-weight: 700; color: var(--ink); }
 .role h2::before { display: none; }
 .role p { margin: 0; font-size: 0.94rem; font-weight: 600; line-height: 1.5; color: var(--muted); }
