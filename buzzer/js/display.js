@@ -181,7 +181,7 @@ function stopTimer() { if (timer) { clearInterval(timer); timer = null; } el.tim
 function celebrate() {
   const c = el.confetti;
   c.innerHTML = '';
-  const colors = ['#5b61c9', '#13a89e', '#ef6f6c', '#e9a23b', '#8a6fc4'];
+  const colors = ['#d56ff2', '#f8c81a', '#ec4899', '#8b21c4', '#8b7cf6'];
   for (let i = 0; i < 60; i++) {
     const s = document.createElement('span');
     s.className = 'confetti-bit';
