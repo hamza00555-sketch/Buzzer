@@ -2,7 +2,7 @@
    الباصرة — ثيم داكن نابض بالألوان · أيقونات SVG · أنيميشن
    مسطّح بلا تدرّجات · عربي RTL · Impeccable-clean
    ============================================================ */
-@import url('https://fonts.googleapis.com/css2?family=Changa:wght@500;600;700;800&family=Tajawal:wght@400;500;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&family=Tajawal:wght@400;500;700;800&display=swap');
 
 :root {
   /* أسطح داكنة */
@@ -38,7 +38,7 @@
   --sp-1: 6px; --sp-2: 10px; --sp-3: 16px; --sp-4: 22px; --sp-5: 32px; --sp-6: 48px;
 
   --font-body: "Tajawal", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --font-head: "Changa", "Tajawal", system-ui, sans-serif;
+  --font-head: "Readex Pro", "Tajawal", system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -48,8 +48,13 @@ body {
   min-height: 100dvh; line-height: 1.5; -webkit-tap-highlight-color: transparent;
 }
 
+/* رسومات الخلفية: توهّجات لونية ناعمة + نقوش نقاط خفيفة (بلا تدرّجات) */
+body::before, body::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+body::before { background: url('../img/bg.svg') center / cover no-repeat; }
+body::after  { background: url('../img/dots.svg') repeat; background-size: 26px 26px; }
+
 h1, h2, h3, .brand h1, .card h2, .role h2, .d-center h2, .d-room-code, .code-box .code,
-.d-code-hint, .d-count, .d-target, .question-box, .buzz-btn, .big-count, .rank-line { font-family: var(--font-head); letter-spacing: -0.3px; }
+.d-code-hint, .d-count, .d-target, .question-box, .buzz-btn, .big-count, .rank-line { font-family: var(--font-head); letter-spacing: 0; }
 
 .wrap { max-width: 600px; margin: 0 auto; padding: var(--sp-5) var(--sp-3) var(--sp-6); }
 
@@ -65,13 +70,13 @@ h1, h2, h3, .brand h1, .card h2, .role h2, .d-center h2, .d-room-code, .code-box
 .brand { text-align: center; margin: var(--sp-2) 0 var(--sp-5); animation: rise .5s both; }
 .brand .logo { display: inline-flex; font-size: 3.2rem; color: var(--violet); }
 .brand .logo .icon { animation: float 3.2s ease-in-out infinite; }
-.brand h1 { margin: 6px 0 0; font-size: 2.8rem; font-weight: 800; line-height: 1.02; color: var(--ink); }
+.brand h1 { margin: 6px 0 0; font-size: 2.5rem; font-weight: 700; line-height: 1.02; color: var(--ink); }
 .brand .sub { color: var(--muted); margin-top: 10px; font-size: 1.04rem; font-weight: 600; }
 
 /* ===== كروت ===== */
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--sp-4); box-shadow: var(--sh-md); margin-bottom: var(--sp-3); animation: rise .5s both; }
 .card:nth-of-type(2) { animation-delay: .05s; } .card:nth-of-type(3) { animation-delay: .1s; } .card:nth-of-type(4) { animation-delay: .15s; }
-.card h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 var(--sp-3); font-size: 1.32rem; font-weight: 800; color: var(--ink); }
+.card h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 var(--sp-3); font-size: 1.28rem; font-weight: 700; color: var(--ink); }
 .card h2 .icon { color: var(--violet); font-size: 1.3rem; }
 .card h2::before { content: ""; flex: 0 0 auto; width: 6px; height: 1.1em; border-radius: 99px; background: var(--violet); }
 .card h2:has(.icon)::before { display: none; }
@@ -91,7 +96,7 @@ textarea { resize: vertical; min-height: 68px; line-height: 1.6; }
 /* ===== الأزرار ===== */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 9px; width: 100%;
-  border: none; border-radius: var(--radius-sm); padding: 16px 18px; font-size: 1.08rem; font-weight: 800;
+  border: none; border-radius: var(--radius-sm); padding: 16px 18px; font-size: 1.06rem; font-weight: 700;
   font-family: var(--font-head); cursor: pointer; color: #fff; background: var(--primary-btn);
   box-shadow: 0 10px 22px rgba(124,58,237,.4); transition: transform .06s, filter .15s, box-shadow .15s;
 }
@@ -118,7 +123,7 @@ textarea { resize: vertical; min-height: 68px; line-height: 1.6; }
 }
 .role:hover { transform: translateY(-4px) scale(1.01); box-shadow: var(--sh-lg); }
 .role .emoji { font-size: 2.7rem; display: inline-flex; line-height: 1; }
-.role h2 { margin: 0 0 4px; font-size: 1.3rem; font-weight: 800; color: var(--ink-on); }
+.role h2 { margin: 0 0 4px; font-size: 1.25rem; font-weight: 700; color: var(--ink-on); }
 .role h2::before { display: none; }
 .role p { margin: 0; font-size: 0.94rem; font-weight: 600; line-height: 1.5; color: var(--ink-on); opacity: .82; }
 .roles .role:nth-of-type(1) { --accent: var(--amber); --ink-on: #2a1c00; animation-delay: .05s; }
@@ -174,7 +179,7 @@ ul.list { list-style: none; margin: var(--sp-2) 0 0; padding: 0; display: grid; 
 .rank-line { margin-top: var(--sp-3); font-size: 1.65rem; font-weight: 800; min-height: 1.6em; }
 .rank-line strong { color: var(--amber); }
 
-.question-box { font-size: 1.55rem; font-weight: 800; line-height: 1.4; background: var(--surface-2); border-radius: var(--radius-sm); padding: var(--sp-4); text-align: center; min-height: 1.4em; }
+.question-box { font-size: 1.45rem; font-weight: 700; line-height: 1.4; background: var(--surface-2); border-radius: var(--radius-sm); padding: var(--sp-4); text-align: center; min-height: 1.4em; }
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: var(--sp-3); }
 .topbar .who { font-weight: 800; } .topbar .who small { color: var(--muted); font-weight: 500; }
 footer { text-align: center; color: var(--muted); font-size: 0.85rem; margin-top: var(--sp-4); font-weight: 500; }
