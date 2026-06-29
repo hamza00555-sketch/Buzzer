@@ -3,6 +3,7 @@ import { supabase } from './supabase.js';
 import { $, $$, escapeHtml, formatDelta, generateRoomCode, normalizeAr, store } from './common.js';
 import { MODES, MODE_LIST, mcqPoints, CLOSEST_POINTS } from './modes.js';
 import { QUESTIONS } from './questions.js';
+import { PACKS } from './packs.js';
 
 let room = null;             // صف الغرفة الحالي
 const players = new Map();   // id -> player
@@ -12,6 +13,8 @@ let channel = null;
 let timer = null;            // مؤقّت الكشف التلقائي
 let authorMode = 'buzz';     // الوضع المختار في نموذج التأليف
 let pendingFeud = null;      // فهرس إجابة feud بانتظار اختيار اللاعب الذي قالها
+let pack = null;             // الجولة الجاهزة المختارة (سلسلة أسئلة)
+let packPos = 0;             // موضع السؤال الحالي داخل الجولة
 const scored = new Set();    // الجولات اللي اتحسبت نقاطها (منع التكرار)
 
 const el = {
@@ -24,6 +27,7 @@ const el = {
   phaseLabel: $('#phaseLabel'), roundLabel: $('#roundLabel'), timerLabel: $('#timerLabel'),
   live: $('#live'), liveTitle: $('#liveTitle'), liveBody: $('#liveBody'),
   playerList: $('#playerList'), playerCount: $('#playerCount'), resetScoresBtn: $('#resetScoresBtn'),
+  packList: $('#packList'), packStatus: $('#packStatus'), packInfo: $('#packInfo'), packExit: $('#packExit'),
 };
 
 // ============ إنشاء/استئناف الغرفة ============
@@ -61,6 +65,7 @@ async function enterDashboard() {
   el.code.textContent = room.code;
   el.displayLink.href = `./display.html?code=${room.code}`;
   renderModePicker();
+  renderPackList();
   selectMode(room.mode || 'buzz');
   updatePhase();
   await loadPlayers();
@@ -299,6 +304,10 @@ async function nextRound() {
   const { data } = await supabase.from('rooms').update({ phase: 'lobby' }).eq('id', room.id).select().single();
   if (data) room = data;
   buzzes = []; answers = []; pendingFeud = null;
+  if (pack) {
+    if (packPos < pack.items.length - 1) { packPos++; loadPackItem(); renderLive(); return; }
+    exitPack(); // كانت آخر سؤال في الجولة
+  }
   updatePhase();
   renderLive();
 }
@@ -343,6 +352,9 @@ function updatePhase() {
   el.startBtn.hidden = live;
   el.revealBtn.hidden = !live;
   el.nextBtn.hidden = room.phase !== 'reveal';
+  el.nextBtn.textContent = pack
+    ? (packPos < pack.items.length - 1 ? `السؤال التالي (${packPos + 2}/${pack.items.length})` : 'إنهاء الجولة')
+    : 'جولة جديدة';
   el.modePicker.classList.toggle('disabled', live);
   el.forms.classList.toggle('disabled', live);
 }
@@ -507,6 +519,12 @@ function wire() {
     const d = e.target.closest('.demo-btn');
     if (d) fillDemo(d.dataset.demo);
   });
+  // اختيار جولة جاهزة + إنهاؤها
+  el.packList.addEventListener('click', (e) => {
+    const b = e.target.closest('.pack-btn');
+    if (b && room.phase !== 'live') startPack(b.dataset.pack);
+  });
+  el.packExit.addEventListener('click', exitPack);
   // كشف إجابات Family Feud وإسنادها للاعب
   el.liveBody.addEventListener('click', (e) => {
     const pick = e.target.closest('[data-feud-pick]');
@@ -518,30 +536,69 @@ function wire() {
 }
 
 // ملء النموذج بسؤال جاهز من بنك الأسئلة (يتنقّل بينها مع كل ضغطة).
+// ملء حقول النموذج من عنصر سؤال (للديمو وللجولات الجاهزة).
+function fillFromItem(mode, item) {
+  if (mode === 'buzz') {
+    $('#q_buzz').value = item.q || '';
+  } else if (mode === 'mcq') {
+    $('#q_mcq').value = item.q || '';
+    const opts = $$('.mcq-opt');
+    opts.forEach((o, i) => { o.value = (item.options || [])[i] || ''; });
+    const radio = document.querySelector(`input[name="mcq_correct"][value="${item.correct}"]`);
+    if (radio) radio.checked = true;
+  } else if (mode === 'feud') {
+    $('#q_feud').value = item.q || '';
+    $('#feud_rows').innerHTML = (item.answers || []).map((a) =>
+      `<div class="feud-row"><input class="feud-text" type="text" value="${escapeHtml(a.text)}" />` +
+      `<input class="feud-points" type="number" value="${a.points}" min="1" /></div>`).join('');
+  } else if (mode === 'closest') {
+    $('#q_closest').value = item.q || '';
+    $('#closest_target').value = item.target ?? '';
+    $('#closest_unit').value = item.unit || '';
+  }
+}
+
+// زر "مثال جاهز": يتنقّل بين أسئلة البنك لكل وضع.
 const demoIdx = { buzz: 0, mcq: 0, feud: 0, closest: 0 };
 function fillDemo(mode) {
   const bank = QUESTIONS[mode];
   if (!bank || !bank.length) return;
   const item = bank[demoIdx[mode] % bank.length];
   demoIdx[mode]++;
-  if (mode === 'buzz') {
-    $('#q_buzz').value = item.q;
-  } else if (mode === 'mcq') {
-    $('#q_mcq').value = item.q;
-    const opts = $$('.mcq-opt');
-    opts.forEach((o, i) => { o.value = item.options[i] || ''; });
-    const radio = document.querySelector(`input[name="mcq_correct"][value="${item.correct}"]`);
-    if (radio) radio.checked = true;
-  } else if (mode === 'feud') {
-    $('#q_feud').value = item.q;
-    $('#feud_rows').innerHTML = item.answers.map((a) =>
-      `<div class="feud-row"><input class="feud-text" type="text" value="${escapeHtml(a.text)}" />` +
-      `<input class="feud-points" type="number" value="${a.points}" min="1" /></div>`).join('');
-  } else if (mode === 'closest') {
-    $('#q_closest').value = item.q;
-    $('#closest_target').value = item.target;
-    $('#closest_unit').value = item.unit || '';
-  }
+  selectMode(mode);
+  fillFromItem(mode, item);
+}
+
+// ============ الجولات الجاهزة ============
+function renderPackList() {
+  el.packList.innerHTML = PACKS.map((p) =>
+    `<button type="button" class="btn secondary pack-btn" data-pack="${p.id}">
+      <span>${escapeHtml(p.name)}</span><small>${escapeHtml(p.desc)} · ${p.items.length} أسئلة</small>
+    </button>`).join('');
+}
+
+function startPack(id) {
+  const p = PACKS.find((x) => x.id === id);
+  if (!p) return;
+  pack = p; packPos = 0;
+  loadPackItem();
+}
+
+// يحمّل السؤال الحالي من الجولة في النموذج (يبدّل الوضع ويملأ الحقول).
+function loadPackItem() {
+  if (!pack) return;
+  const item = pack.items[packPos];
+  selectMode(item.mode);
+  fillFromItem(item.mode, item);
+  el.packStatus.hidden = false;
+  el.packInfo.textContent = `${pack.name} · سؤال ${packPos + 1}/${pack.items.length} · ${MODES[item.mode].name}`;
+  updatePhase();
+}
+
+function exitPack() {
+  pack = null; packPos = 0;
+  el.packStatus.hidden = true;
+  updatePhase();
 }
 
 function addFeudRow() {

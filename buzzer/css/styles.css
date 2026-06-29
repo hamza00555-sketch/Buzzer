@@ -300,3 +300,9 @@ footer a { color: var(--violet); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; }
 }
+
+/* ===== الجولات الجاهزة ===== */
+.pack-list { display: grid; gap: 8px; }
+.pack-btn { flex-direction: column; align-items: flex-start; gap: 2px; text-align: start; }
+.pack-btn small { color: var(--muted); font-weight: 600; font-size: .82rem; }
+.pack-status { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: var(--sp-3); padding-top: var(--sp-3); border-top: 1px solid var(--line); font-weight: 700; color: var(--violet); }
